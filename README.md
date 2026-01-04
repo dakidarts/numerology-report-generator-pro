@@ -71,7 +71,7 @@ cd numerology-report-generator-pro
 
 3. Click "Load Temporary Add-on"
 
-4. Navigate to the `dev` folder and select `manifest.json`
+4. Select `manifest.json`
 
 5. The extension icon will appear in your toolbar
 
