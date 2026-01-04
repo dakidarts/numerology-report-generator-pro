@@ -1,0 +1,705 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Numerology Report Generator Pro</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <link rel="stylesheet" href="css/styles.css">
+</head>
+<body>
+    <div class="container">
+        <!-- Header -->
+        <div class="header">
+            <div class="header-top">
+                <div class="header-logo">
+                    <img src="./icons/icon128.png" alt="Numerology API" width="32" height="32">
+                </div>
+                <div class="header-controls">
+                    <button class="settings-toggle" id="settingsBtn" title="Settings">
+                        <i class="fas fa-cog"></i>
+                    </button>
+                    <button class="theme-toggle-btn" id="themeToggleBtn" title="Toggle Theme">
+                        <i class="fas fa-moon"></i>
+                    </button>
+                </div>
+            </div>
+            <div class="header-content">
+                <h1 data-i18n="header_title">Numerology Report Generator Pro</h1>
+                <p data-i18n="header_subtitle">Enterprise PDF Reports for Spiritual Professionals</p>
+            </div>
+        </div>
+
+        <!-- Message Container -->
+        <div id="messageContainer"></div>
+
+        <!-- Navigation Tabs -->
+        <div class="tabs">
+            <button class="tab active" data-tab="generate">
+                <i class="fas fa-file-pdf"></i> <span data-i18n="tab_generate">Generate</span>
+            </button>
+            <button class="tab" data-tab="profiles">
+                <i class="fas fa-users"></i> <span data-i18n="tab_profiles">Profiles</span>
+            </button>
+            <button class="tab" data-tab="designer">
+                <i class="fas fa-palette"></i> <span data-i18n="tab_designer">Designer</span>
+            </button>
+            <button class="tab" data-tab="history">
+                <i class="fas fa-history"></i> <span data-i18n="tab_history">History</span>
+            </button>
+            <button class="tab" data-tab="analytics">
+                <i class="fas fa-chart-bar"></i> <span data-i18n="tab_analytics">Analytics</span>
+            </button>
+        </div>
+
+        <!-- Content Sections -->
+        <div class="content">
+            
+            <!-- GENERATE TAB -->
+            <div class="tab-content active" id="generateTab">
+                <div class="section-header">
+                    <i class="fas fa-magic"></i>
+                    <h2 data-i18n="generate_title">Generate Numerology Report</h2>
+                </div>
+
+                <!-- Report Type Selection -->
+                <div class="input-group">
+                    <label for="reportType" data-i18n="report_type">
+                        <i class="fas fa-scroll"></i> Report Type
+                    </label>
+                    <select id="reportType" class="styled-select">
+                        <option value="personal-cycle" data-i18n="personal_cycle">Personal Cycle Analysis</option>
+                        <option value="life-path" disabled>Life Path Report (Coming Soon)</option>
+                        <option value="compatibility" disabled>Compatibility Report (Coming Soon)</option>
+                        <option value="business" disabled>Business Numerology (Coming Soon)</option>
+                    </select>
+                </div>
+
+                <!-- Template Selection -->
+                <div class="input-group">
+                    <label for="templateSelect" data-i18n="select_template">
+                        <i class="fas fa-palette"></i> Report Template
+                    </label>
+                    <select id="templateSelect" class="styled-select">
+                        <option value="">-- Select Template --</option>
+                    </select>
+                </div>
+
+                <!-- Client Selection Mode -->
+                <div class="toggle-group">
+                    <label class="radio-label">
+                        <input type="radio" name="clientMode" value="existing" checked>
+                        <span data-i18n="use_existing_profile">Use Existing Profile</span>
+                    </label>
+                    <label class="radio-label">
+                        <input type="radio" name="clientMode" value="quick">
+                        <span data-i18n="quick_entry">Quick Entry</span>
+                    </label>
+                </div>
+
+                <!-- Existing Profile Mode -->
+                <div id="existingProfileMode">
+                    <div class="input-group">
+                        <label for="profileSelect" data-i18n="select_profile">
+                            <i class="fas fa-user"></i> Select Client Profile
+                        </label>
+                        <select id="profileSelect" class="styled-select">
+                            <option value="">-- No Profiles Yet --</option>
+                        </select>
+                    </div>
+                </div>
+
+                <!-- Quick Entry Mode -->
+                <div id="quickEntryMode" style="display: none;">
+                    <div class="input-group">
+                        <label for="quickFirstName" data-i18n="first_name">
+                            <i class="fas fa-user"></i> First Name
+                        </label>
+                        <input type="text" id="quickFirstName" data-i18n-placeholder="profile_first_name_placeholder" placeholder="John">
+                    </div>
+
+                    <div class="input-group">
+                        <label for="quickLastName" data-i18n="last_name">
+                            <i class="fas fa-user"></i> Last Name
+                        </label>
+                        <input type="text" id="quickLastName" data-i18n-placeholder="profile_last_name_placeholder" placeholder="Doe">
+                    </div>
+
+                    <div class="input-group">
+                        <label for="quickDob" data-i18n="date_of_birth">
+                            <i class="fas fa-calendar"></i> Date of Birth
+                        </label>
+                        <input type="date" id="quickDob">
+                    </div>
+
+                    <div class="input-group">
+                        <label for="quickBirthPlace" data-i18n="place_of_birth">
+                            <i class="fas fa-map-marker-alt"></i> Place of Birth
+                        </label>
+                        <input type="text" id="quickBirthPlace" data-i18n-placeholder="profile_birth_place_placeholder" placeholder="New York, NY, USA">
+                    </div>
+
+                    <div class="input-group">
+                        <label for="quickEmail" data-i18n="email">
+                            <i class="fas fa-envelope"></i> Email (Optional)
+                        </label>
+                        <input type="email" id="quickEmail" data-i18n-placeholder="profile_email_placeholder" placeholder="client@example.com">
+                    </div>
+                </div>
+
+                <!-- Target Year -->
+                <div class="input-group">
+                    <label for="targetYear" data-i18n="target_year">
+                        <i class="fas fa-calendar-alt"></i> Target Year
+                    </label>
+                    <input type="number" id="targetYear" min="1900" max="2100" value="2026">
+                </div>
+
+                <!-- Report Customization -->
+                <div class="collapsible-section">
+                    <button class="collapsible-header" type="button">
+                        <span data-i18n="report_customization">
+                            <i class="fas fa-palette"></i> Report Customization
+                        </span>
+                        <i class="fas fa-chevron-down"></i>
+                    </button>
+                    <div class="collapsible-content">
+                        <div class="input-group">
+                            <label for="reportTitle" data-i18n="report_title">
+                                <i class="fas fa-heading"></i> Custom Report Title (Optional)
+                            </label>
+                            <input type="text" id="reportTitle" data-i18n-placeholder="report_title_placeholder" placeholder="Leave blank for default">
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Generate Button -->
+                <button class="btn btn-primary btn-large" id="generateReportBtn">
+                    <i class="fas fa-file-pdf"></i>
+                    <span data-i18n="generate_button">Generate PDF Report</span>
+                </button>
+
+                <!-- Loading Indicator -->
+                <div class="loading-container" id="loadingContainer" style="display: none;">
+                    <div class="spinner"></div>
+                    <p id="loadingText">Fetching numerology data...</p>
+                    <div class="progress-bar">
+                        <div class="progress-fill" id="progressFill"></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- PROFILES TAB -->
+            <div class="tab-content" id="profilesTab">
+                <div class="section-header">
+                    <i class="fas fa-users"></i>
+                    <h2 data-i18n="profiles_title">Client Profiles</h2>
+                </div>
+
+                <button class="btn btn-secondary" id="addProfileBtn">
+                    <i class="fas fa-user-plus"></i> <span data-i18n="add_profile_button">Add New Profile</span>
+                </button>
+
+                <div class="search-box">
+                    <i class="fas fa-search"></i>
+                    <input type="text" id="profileSearch" data-i18n-placeholder="search_profiles" placeholder="Search profiles...">
+                </div>
+
+                <div id="profilesList" class="profiles-list">
+                    <div class="empty-state">
+                        <i class="fas fa-user-friends"></i>
+                        <p>No client profiles yet</p>
+                        <small>Create profiles to quickly generate reports</small>
+                    </div>
+                </div>
+            </div>
+
+            <!-- DESIGNER TAB -->
+            <div class="tab-content" id="designerTab">
+                <div class="section-header">
+                    <i class="fas fa-palette"></i>
+                    <h2 data-i18n="designer_title">Report Designer</h2>
+                </div>
+
+                <button class="btn btn-secondary" id="addTemplateBtn">
+                    <i class="fas fa-plus"></i> <span data-i18n="create_template_button">Create New Template</span>
+                </button>
+
+                <div class="search-box">
+                    <i class="fas fa-search"></i>
+                    <input type="text" id="templateSearch" data-i18n-placeholder="search_templates" placeholder="Search templates...">
+                </div>
+
+                <div id="templatesList" class="profiles-list">
+                    <div class="empty-state">
+                        <i class="fas fa-paint-brush"></i>
+                        <p>Loading templates...</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- HISTORY TAB -->
+            <div class="tab-content" id="historyTab">
+                <div class="section-header">
+                    <i class="fas fa-history"></i>
+                    <h2 data-i18n="history_title">Report History</h2>
+                </div>
+
+                <div class="action-buttons">
+                    <button class="btn btn-secondary" id="exportHistoryBtn">
+                        <i class="fas fa-download"></i> <span data-i18n="export_history_button">Export History</span>
+                    </button>
+                    <button class="btn btn-danger" id="clearHistoryBtn">
+                        <i class="fas fa-trash"></i> <span data-i18n="clear_history_button">Clear All</span>
+                    </button>
+                </div>
+
+                <div id="historyList" class="history-list">
+                    <div class="empty-state">
+                        <i class="fas fa-inbox"></i>
+                        <p>No report history yet</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ANALYTICS TAB -->
+            <div class="tab-content" id="analyticsTab">
+                <div class="section-header">
+                    <i class="fas fa-chart-bar"></i>
+                    <h2 data-i18n="analytics_title">Usage Analytics</h2>
+                </div>
+
+                <div class="metrics-grid">
+                    <div class="metric-card">
+                        <div class="metric-icon">
+                            <i class="fas fa-file-pdf"></i>
+                        </div>
+                        <div class="metric-value" id="totalReports">0</div>
+                        <div class="metric-label" data-i18n="total_reports">Total Reports</div>
+                    </div>
+
+                    <div class="metric-card">
+                        <div class="metric-icon">
+                            <i class="fas fa-users"></i>
+                        </div>
+                        <div class="metric-value" id="totalProfiles">0</div>
+                        <div class="metric-label" data-i18n="total_profiles">Client Profiles</div>
+                    </div>
+
+                    <div class="metric-card">
+                        <div class="metric-icon">
+                            <i class="fas fa-calendar-check"></i>
+                        </div>
+                        <div class="metric-value" id="thisMonthReports">0</div>
+                        <div class="metric-label" data-i18n="this_month">This Month</div>
+                    </div>
+
+                    <div class="metric-card">
+                        <div class="metric-icon">
+                            <i class="fas fa-star"></i>
+                        </div>
+                        <div class="metric-value" id="mostUsedReport">N/A</div>
+                        <div class="metric-label" data-i18n="popular_report">Popular Report</div>
+                    </div>
+                </div>
+
+                <div class="chart-container">
+                    <h3 data-i18n="reports_chart_title">Reports Generated (Last 30 Days)</h3>
+                    <canvas id="reportsChart"></canvas>
+                </div>
+            </div>
+        </div>
+
+        <!-- Footer -->
+        <div class="footer">
+            <a href="https://rapidapi.com/dakidarts-dakidarts-default/api/the-numerology-api" 
+               class="footer-link" 
+               target="_blank" 
+               rel="noopener noreferrer">
+                <i class="fas fa-bolt"></i> <span data-i18n="powered_by_footer">Powered by The Numerology API</span>
+            </a>
+            
+            <div class="footer-social">
+                <div class="follow-text" data-i18n="connect_with_us">Connect With Us</div>
+                <div class="footer-icons">
+                    <a href="https://numerologyapi.com" class="footer-icon" target="_blank" rel="noopener noreferrer" title="Website">
+                        <i class="fas fa-globe"></i>
+                    </a>
+                    <a href="https://youtube.com/@dakidarts" class="footer-icon" target="_blank" rel="noopener noreferrer" title="YouTube">
+                        <i class="fab fa-youtube"></i>
+                    </a>
+                    <a href="https://x.com/dakidarts" class="footer-icon" target="_blank" rel="noopener noreferrer" title="X (Twitter)">
+                        <i class="fab fa-x-twitter"></i>
+                    </a>
+                    <a href="https://instagram.com/dakidarts" class="footer-icon" target="_blank" rel="noopener noreferrer" title="Instagram">
+                        <i class="fab fa-instagram"></i>
+                    </a>
+                    <a href="https://github.com/dakidarts" class="footer-icon" target="_blank" rel="noopener noreferrer" title="GitHub">
+                        <i class="fab fa-github"></i>
+                    </a>
+                </div>
+            </div>
+            
+            <div class="copy-text">
+                © <span id="currentYear"></span> Dakidarts® - <span data-i18n="all_rights_reserved">All Rights Reserved</span>
+            </div>
+            <div class="copy-text legal">
+                 <a href="https://numerologyapi.com/privacy-policy/" target="_blank"data-i18n="privacy_policy">Privacy Policy</a> • <a href="https://numerologyapi.com/terms-of-service/" target="_blank"data-i18n="terms_of_service">Terms of Service</a> • <a href="https://numerologyapi.com/about/" target="_blank"data-i18n="about_us">About Us</a>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODALS -->
+    
+    <!-- Settings Modal -->
+    <div class="modal" id="settingsModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3 data-i18n="settings_title"><i class="fas fa-cog"></i> Settings</h3>
+                <button class="close-btn" id="closeSettingsBtn">&times;</button>
+            </div>
+
+            <div class="modal-body">
+                <div class="settings-section">
+                    <h4 data-i18n="api_configuration"><i class="fas fa-key"></i> API Configuration</h4>
+                    
+                    <div class="input-group">
+                        <label for="apiKeyInput" data-i18n="api_key_label">RapidAPI Key</label>
+                        <input type="password" id="apiKeyInput" data-i18n-placeholder="api_key_placeholder" placeholder="Enter your RapidAPI key">
+                    </div>
+
+                    <div class="info-box">
+                        <i class="fas fa-info-circle"></i>
+                        <div>
+                            <strong data-i18n="get_api_key">Get Your Free API Key:</strong>
+                            <a href="https://rapidapi.com/dakidarts-dakidarts-default/api/the-numerology-api" 
+                               target="_blank" rel="noopener noreferrer" data-i18n="subscribe_api">
+                                Subscribe to The Numerology API
+                            </a>
+                        </div>
+                    </div>
+
+                    <button class="btn btn-primary" id="saveApiKeyBtn">
+                        <i class="fas fa-save"></i> <span data-i18n="save_api_key">Save API Key</span>
+                    </button>
+                </div>
+
+                <div class="settings-section">
+                    <h4 data-i18n="personal_information"><i class="fas fa-user"></i> Personal Information</h4>
+                    
+                    <div class="input-group">
+                        <label for="practitionerName" data-i18n="practitioner_name">Your Name / Business Name</label>
+                        <input type="text" id="practitionerName" data-i18n-placeholder="practitioner_name_placeholder" placeholder="Dr. Jane Smith">
+                    </div>
+
+                    <div class="input-group">
+                        <label for="practitionerEmail" data-i18n="email">Email</label>
+                        <input type="email" id="practitionerEmail" data-i18n-placeholder="practitioner_email_placeholder" placeholder="you@example.com">
+                    </div>
+
+                    <div class="input-group">
+                        <label for="practitionerWebsite" data-i18n="practitioner_website">Website (Optional)</label>
+                        <input type="url" id="practitionerWebsite" data-i18n-placeholder="practitioner_website_placeholder" placeholder="https://yoursite.com">
+                    </div>
+
+                    <button class="btn btn-primary" id="savePersonalInfoBtn">
+                        <i class="fas fa-save"></i> <span data-i18n="save_personal_info">Save Personal Info</span>
+                    </button>
+                </div>
+
+                <div class="settings-section">
+                    <h4 data-i18n="preferences"><i class="fas fa-palette"></i> Preferences</h4>
+                    
+                    <div class="input-group">
+                        <label for="languageSelect" data-i18n="language">Language</label>
+                        <select id="languageSelect" class="styled-select">
+                            <option value="en">English</option>
+                            <option value="fr">Français</option>
+                            <option value="es">Español</option>
+                            <option value="de">Deutsch</option>
+                            <option value="ru">Русский</option>
+                            <option value="hi">हिन्दी</option>
+                            <option value="bn">বাংলা</option>
+                            <option value="pt">Português</option>                        </select>
+                    </div>
+
+                    <div class="checkbox-group">
+                        <input type="checkbox" id="autoSaveReports" checked>
+                        <label for="autoSaveReports" data-i18n="auto_save_reports">Auto-save generated reports</label>
+                    </div>
+
+                    <div class="checkbox-group">
+                        <input type="checkbox" id="showNotifications" checked>
+                        <label for="showNotifications" data-i18n="show_notifications">Show notifications</label>
+                    </div>
+
+                    <button class="btn btn-primary" id="savePreferencesBtn">
+                        <i class="fas fa-save"></i> <span data-i18n="save_preferences">Save Preferences</span>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Add/Edit Profile Modal -->
+    <div class="modal" id="profileModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3 id="profileModalTitle">
+                    <i class="fas fa-user-plus"></i> Add Client Profile
+                </h3>
+                <button class="close-btn" id="closeProfileBtn">&times;</button>
+            </div>
+
+            <div class="modal-body">
+                <form id="profileForm">
+                    <input type="hidden" id="profileId">
+
+                    <div class="input-group">
+                        <label for="profileFirstName" data-i18n="profile_first_name">
+                            <i class="fas fa-user"></i> First Name *
+                        </label>
+                        <input type="text" id="profileFirstName" required data-i18n-placeholder="profile_first_name_placeholder" placeholder="John">
+                    </div>
+
+                    <div class="input-group">
+                        <label for="profileMiddleName" data-i18n="profile_middle_name">
+                            <i class="fas fa-user"></i> Middle Name
+                        </label>
+                        <input type="text" id="profileMiddleName" data-i18n-placeholder="profile_middle_name_placeholder" placeholder="Michael">
+                    </div>
+
+                    <div class="input-group">
+                        <label for="profileLastName" data-i18n="profile_last_name">
+                            <i class="fas fa-user"></i> Last Name *
+                        </label>
+                        <input type="text" id="profileLastName" required data-i18n-placeholder="profile_last_name_placeholder" placeholder="Doe">
+                    </div>
+
+                    <div class="input-group">
+                        <label for="profileShortName" data-i18n="profile_short_name">
+                            <i class="fas fa-user-tag"></i> Nickname/Short Name
+                        </label>
+                        <input type="text" id="profileShortName" data-i18n-placeholder="profile_short_name_placeholder" placeholder="Johnny">
+                    </div>
+
+                    <div class="input-group">
+                        <label for="profileDob" data-i18n="profile_dob">
+                            <i class="fas fa-birthday-cake"></i> Date of Birth *
+                        </label>
+                        <input type="date" id="profileDob" required>
+                    </div>
+
+                    <div class="input-group">
+                        <label for="profileBirthPlace" data-i18n="profile_birth_place">
+                            <i class="fas fa-map-marker-alt"></i> Place of Birth *
+                        </label>
+                        <input type="text" id="profileBirthPlace" required data-i18n-placeholder="profile_birth_place_placeholder" placeholder="New York, NY, USA">
+                    </div>
+
+                    <div class="input-group">
+                        <label for="profileCity" data-i18n="profile_city">
+                            <i class="fas fa-city"></i> City
+                        </label>
+                        <input type="text" id="profileCity" data-i18n-placeholder="profile_city_placeholder" placeholder="New York">
+                    </div>
+
+                    <div class="input-group">
+                        <label for="profileCountry" data-i18n="profile_country">
+                            <i class="fas fa-flag"></i> Country
+                        </label>
+                        <input type="text" id="profileCountry" data-i18n-placeholder="profile_country_placeholder" placeholder="USA">
+                    </div>
+
+                    <div class="input-group">
+                        <label for="profileTimezone" data-i18n="profile_timezone">
+                            <i class="fas fa-clock"></i> Timezone
+                        </label>
+                        <input type="text" id="profileTimezone" data-i18n-placeholder="profile_timezone_placeholder" placeholder="e.g. Africa/Accra, America/New_York">
+                    </div>
+
+                    <div class="input-group">
+                        <label for="profileEmail" data-i18n="profile_email">
+                            <i class="fas fa-envelope"></i> Email
+                        </label>
+                        <input type="email" id="profileEmail" data-i18n-placeholder="profile_email_placeholder" placeholder="client@example.com">
+                    </div>
+
+                    <div class="input-group">
+                        <label for="profilePhone" data-i18n="profile_phone">
+                            <i class="fas fa-phone"></i> Phone
+                        </label>
+                        <input type="tel" id="profilePhone" data-i18n-placeholder="profile_phone_placeholder" placeholder="+1 234 567 8900">
+                    </div>
+
+                    <div class="input-group">
+                        <label for="profileNotes" data-i18n="profile_notes">
+                            <i class="fas fa-sticky-note"></i> Notes
+                        </label>
+                        <textarea id="profileNotes" rows="3" data-i18n-placeholder="profile_notes_placeholder" placeholder="Additional notes about this client..."></textarea>
+                    </div>
+
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" id="cancelProfileBtn">
+                            Cancel
+                        </button>
+                        <button type="submit" class="btn btn-primary">
+                            <i class="fas fa-save"></i> Save Profile
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Template Designer Modal -->
+    <div class="modal" id="templateModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3 id="templateModalTitle">
+                    <i class="fas fa-palette"></i> Create Template
+                </h3>
+                <button class="close-btn" id="closeTemplateBtn">&times;</button>
+            </div>
+
+            <div class="modal-body">
+                <form id="templateForm">
+                    <input type="hidden" id="templateId">
+
+                    <div class="input-group">
+                        <label for="templateName" data-i18n="template_name_label">
+                            <i class="fas fa-tag"></i> Template Name *
+                        </label>
+                        <input type="text" id="templateName" required placeholder="My Custom Template">
+                    </div>
+
+                    <div class="input-group">
+                        <label for="templateReportType" data-i18n="template_report_type">
+                            <i class="fas fa-scroll"></i> Report Type *
+                        </label>
+                        <select id="templateReportType" class="styled-select" required>
+                            <option value="personal-cycle">Personal Cycle Analysis</option>
+                        </select>
+                    </div>
+
+                    <div class="input-group">
+                        <label for="templateFontFamily" data-i18n="template_title_font">
+                            <i class="fas fa-font"></i> Title Font Family
+                        </label>
+                        <select id="templateFontFamily" class="styled-select">
+                            <option value="helvetica">Helvetica</option>
+                            <option value="times">Times New Roman</option>
+                            <option value="courier">Courier</option>
+                            <option value="georgia">Georgia</option>
+                            <option value="palatino">Palatino</option>
+                            <option value="garamond">Garamond</option>
+                            <option value="bookman">Bookman</option>
+                            <option value="comic">Comic Sans</option>
+                            <option value="trebuchet">Trebuchet</option>
+                            <option value="arial">Arial</option>
+                            <option value="verdana">Verdana</option>
+                            <option value="impact">Impact</option>
+                            <option value="lucida">Lucida</option>
+                            <option value="tahoma">Tahoma</option>
+                            <option value="century">Century Gothic</option>
+                            <option value="monaco">Monaco</option>
+                            <option value="optima">Optima</option>
+                        </select>
+                    </div>
+
+                    <div class="input-group">
+                        <label for="templateBodyFontFamily" data-i18n="template_body_font">
+                            <i class="fas fa-font"></i> Body Font Family
+                        </label>
+                        <select id="templateBodyFontFamily" class="styled-select">
+                            <option value="helvetica">Helvetica</option>
+                            <option value="times">Times New Roman</option>
+                            <option value="courier">Courier</option>
+                            <option value="georgia">Georgia</option>
+                            <option value="palatino">Palatino</option>
+                            <option value="garamond">Garamond</option>
+                            <option value="bookman">Bookman</option>
+                            <option value="comic">Comic Sans</option>
+                            <option value="trebuchet">Trebuchet</option>
+                            <option value="arial">Arial</option>
+                            <option value="verdana">Verdana</option>
+                            <option value="impact">Impact</option>
+                            <option value="lucida">Lucida</option>
+                            <option value="tahoma">Tahoma</option>
+                            <option value="century">Century Gothic</option>
+                            <option value="monaco">Monaco</option>
+                            <option value="optima">Optima</option>
+                        </select>
+                    </div>
+
+                    <div class="input-group">
+                        <label for="templatePrimaryColor" data-i18n="template_primary_color">
+                            <i class="fas fa-palette"></i> Primary Color
+                        </label>
+                        <input type="color" id="templatePrimaryColor" value="#6B46C1">
+                    </div>
+
+                    <div class="input-group">
+                        <label for="templateSecondaryColor" data-i18n="template_secondary_color">
+                            <i class="fas fa-palette"></i> Secondary Color
+                        </label>
+                        <input type="color" id="templateSecondaryColor" value="#1A202C">
+                    </div>
+
+                    <div class="input-group">
+                        <label for="templateAccentColor" data-i18n="template_accent_color">
+                            <i class="fas fa-palette"></i> Accent Color
+                        </label>
+                        <input type="color" id="templateAccentColor" value="#4A5568">
+                    </div>
+
+                    <div class="input-group">
+                        <label for="templateBackgroundColor" data-i18n="template_background_color">
+                            <i class="fas fa-palette"></i> Page Background Color
+                        </label>
+                        <input type="color" id="templateBackgroundColor" value="#FFFFFF">
+                    </div>
+
+                    <div class="input-group">
+                        <label for="templateTitleSize" data-i18n="template_title_size">
+                            <i class="fas fa-text-height"></i> Title Font Size
+                        </label>
+                        <input type="number" id="templateTitleSize" min="16" max="36" value="24">
+                    </div>
+
+                    <div class="input-group">
+                        <label for="templateBodySize" data-i18n="template_body_size">
+                            <i class="fas fa-text-height"></i> Body Font Size
+                        </label>
+                        <input type="number" id="templateBodySize" min="12" max="16" value="12">
+                    </div>
+
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" id="cancelTemplateBtn">
+                            Cancel
+                        </button>
+                        <button type="submit" class="btn btn-primary">
+                            <i class="fas fa-save"></i> Save Template
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Scripts -->
+    <script src="libs/jspdf.umd.min.js"></script>
+    <script src="libs/chart.umd.min.js"></script>
+    <script src="i18n/en.js"></script>
+    <script src="i18n/fr.js"></script>
+    <script src="i18n/es.js"></script>
+    <script src="i18n/de.js"></script>
+    <script src="i18n/ru.js"></script>
+    <script src="i18n/hi.js"></script>
+    <script src="i18n/bn.js"></script>
+    <script src="i18n/pt.js"></script>    <script src="i18n/i18n.js"></script>
+    <script src="templates.js"></script>
+    <script src="personal-cycle-report.js"></script>
+    <script src="popup.js"></script>
+</body>
+</html>
