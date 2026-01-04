@@ -15,7 +15,7 @@
 > Enterprise-grade PDF report generator for numerology professionals. Create beautiful, customizable numerology reports with multi-language support.
 
 <p align="center">
-  <img src="dev/icons/icon128.png" alt="Numerology Report Generator Pro" width="128" height="128">
+  <img src="icons/icon128.png" alt="Numerology Report Generator Pro" width="128" height="128">
 </p>
 
 ## ✨ Features
