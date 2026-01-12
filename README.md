@@ -8,7 +8,7 @@
 # Numerology Report Generator Pro
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
-[![Firefox Add-on](https://img.shields.io/badge/Firefox-Add--on-orange?logo=firefox)](https://github.com/dakidarts/numerology-report-generator-pro)
+[![Firefox Add-on](https://img.shields.io/badge/Firefox-Add--on-orange?logo=firefox)](https://addons.mozilla.org/en-US/firefox/addon/numerology-report-generator/)
 [![Version](https://img.shields.io/badge/version-1.0.1-blue.svg)](https://github.com/dakidarts/numerology-report-generator-pro/releases)
 [![PRs Welcome](https://img.shields.io/badge/PRs-welcome-brightgreen.svg)](https://github.com/dakidarts/numerology-report-generator-pro/pulls)
 
