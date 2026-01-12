@@ -9,7 +9,7 @@
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 [![Firefox Add-on](https://img.shields.io/badge/Firefox-Add--on-orange?logo=firefox)](https://addons.mozilla.org/en-US/firefox/addon/numerology-report-generator/)
-[![Version](https://img.shields.io/badge/version-1.0.1-blue.svg)](https://github.com/dakidarts/numerology-report-generator-pro/releases)
+[![Version](https://img.shields.io/badge/version-1.0.2-blue.svg)](https://github.com/dakidarts/numerology-report-generator-pro/releases)
 [![PRs Welcome](https://img.shields.io/badge/PRs-welcome-brightgreen.svg)](https://github.com/dakidarts/numerology-report-generator-pro/pulls)
 
 > Enterprise-grade PDF report generator for numerology professionals. Create beautiful, customizable numerology reports with multi-language support.
@@ -27,9 +27,12 @@
 - Custom practitioner branding in footers
 
 ### 📊 **Report Generation**
-- Personal Cycle Analysis reports
+- Personal Cycle Analysis reports (updated to API v0.1.1)
+- **New:** Life Path Report
+- **New:** Compatibility Report
+- **New:** Business Report
 - Client profile management system
-- Quick entry mode for one-time reports
+- Quick Entry mode (Middle Name now supported)
 - Auto-save functionality
 - Report history tracking
 
@@ -39,7 +42,7 @@
 - Easy language switching in settings
 
 ### 💼 **Client Management**
-- Comprehensive profile fields (name, DOB, birth place, city, country, timezone)
+- Comprehensive profile fields (name, middle name, DOB, birth place, city, country, timezone)
 - Search and filter profiles
 - Import/export capabilities
 - Notes and contact information storage
@@ -65,7 +68,7 @@
 ```bash
 git clone https://github.com/dakidarts/numerology-report-generator-pro.git
 cd numerology-report-generator-pro
-```
+````
 
 2. Open Firefox and navigate to `about:debugging#/runtime/this-firefox`
 
@@ -88,12 +91,13 @@ This extension uses [The Numerology API](https://rapidapi.com/dakidarts-dakidart
 
 ### Generate a Report
 
-1. **Select Report Type**: Choose "Personal Cycle Analysis"
+1. **Select Report Type**: Choose from Personal Cycle, Life Path, Compatibility, or Business
 2. **Choose Template**: Select from default or custom templates
 3. **Client Selection**:
-   - Use existing profile from your saved clients
-   - Or use Quick Entry for one-time reports
-4. **Set Target Year**: Enter the year for analysis
+
+   * Use existing profile from your saved clients
+   * Or use Quick Entry for one-time reports (Middle Name supported)
+4. **Set Target Year** (for Personal Cycle reports)
 5. **Customize** (Optional): Add custom report title
 6. **Generate**: Click "Generate PDF Report"
 
@@ -102,10 +106,11 @@ This extension uses [The Numerology API](https://rapidapi.com/dakidarts-dakidart
 1. Navigate to the **Designer** tab
 2. Click "Create New Template"
 3. Configure:
-   - Template name
-   - Font families (title and body)
-   - Font sizes (12-36pt)
-   - Color scheme (primary, secondary, accent, background)
+
+   * Template name
+   * Font families (title and body)
+   * Font sizes (12-36pt)
+   * Color scheme (primary, secondary, accent, background)
 4. Save your template
 5. Use it for future reports
 
@@ -114,44 +119,47 @@ This extension uses [The Numerology API](https://rapidapi.com/dakidarts-dakidart
 1. Go to the **Profiles** tab
 2. Click "Add New Profile"
 3. Fill in client details:
-   - Personal information (name, DOB, birth place)
-   - Contact details (email, phone)
-   - Location (city, country, timezone)
-   - Notes
-4. Save and reuse for quick report generation
 
+   * Personal information (first, middle, last names, DOB, birth place)
+   * Contact details (email, phone)
+   * Location (city, country, timezone)
+   * Notes
+4. Save and reuse for quick report generation
 
 ## 🛠️ Technologies
 
-- **Frontend**: HTML5, CSS3, Vanilla JavaScript
-- **PDF Generation**: jsPDF
-- **Charts**: Chart.js
-- **Storage**: localStorage API
-- **Platform**: Firefox WebExtension API
-- **i18n**: Custom translation system
+* **Frontend**: HTML5, CSS3, Vanilla JavaScript
+* **PDF Generation**: jsPDF
+* **Charts**: Chart.js
+* **Storage**: localStorage API
+* **Platform**: Firefox WebExtension API
+* **i18n**: Custom translation system
 
 ## 🌟 Key Features Breakdown
 
 ### Template System
-- Default templates (non-deletable, editable)
-- User-created templates (full CRUD operations)
-- Per-report-type template organization
-- Font customization (17 families)
-- Color scheme customization
+
+* Default templates (non-deletable, editable)
+* User-created templates (full CRUD operations)
+* Per-report-type template organization
+* Font customization (17 families)
+* Color scheme customization
 
 ### Report Customization
-- Custom report titles
-- Practitioner branding
-- Dynamic footer with website link
-- Automatic text color contrast
-- Lightened primary color accents
+
+* Custom report titles
+* Practitioner branding
+* Dynamic footer with website link
+* Automatic text color contrast
+* Lightened primary color accents
 
 ### Data Management
-- All data stored locally
-- No cloud dependencies
-- Export/import capabilities
-- Search and filter functionality
-- Automatic data persistence
+
+* All data stored locally
+* No cloud dependencies
+* Export/import capabilities
+* Search and filter functionality
+* Automatic data persistence
 
 ## 🤝 Contributing
 
@@ -169,12 +177,12 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 
 ## 🔗 Links
 
-- **API Documentation**: [The Numerology API](https://rapidapi.com/dakidarts-dakidarts-default/api/the-numerology-api)
-- **Website**: [NumerologyAPI.com](https://numerologyapi.com)
-- **YouTube**: [@dakidarts](https://youtube.com/@dakidarts)
-- **Twitter/X**: [@dakidarts](https://x.com/dakidarts)
-- **Instagram**: [@dakidarts](https://instagram.com/dakidarts)
-- **GitHub**: [@dakidarts](https://github.com/dakidarts)
+* **API Documentation**: [The Numerology API](https://rapidapi.com/dakidarts-dakidarts-default/api/the-numerology-api)
+* **Website**: [NumerologyAPI.com](https://numerologyapi.com)
+* **YouTube**: [@dakidarts](https://youtube.com/@dakidarts)
+* **Twitter/X**: [@dakidarts](https://x.com/dakidarts)
+* **Instagram**: [@dakidarts](https://instagram.com/dakidarts)
+* **GitHub**: [@dakidarts](https://github.com/dakidarts)
 
 ## ☕ Support
 
@@ -185,23 +193,32 @@ If you find this project helpful, consider buying me a coffee!
 ## 📧 Contact
 
 For questions, suggestions, or support:
-- **Email**: Contact via [NumerologyAPI.com](https://numerologyapi.com/about/)
-- **Issues**: [GitHub Issues](https://github.com/dakidarts/numerology-report-generator-pro/issues)
 
+* **Email**: Contact via [NumerologyAPI.com](https://numerologyapi.com/about/)
+* **Issues**: [GitHub Issues](https://github.com/dakidarts/numerology-report-generator-pro/issues)
 
 ## 📊 Version History
 
-### v1.0.1 (Current)
-- ✅ Multi-language support (8 languages)
-- ✅ Complete UI translation system
-- ✅ Template designer system
+### v1.0.2 (Current)
+
+* ✅ Updated Personal Cycle Report generator to align with Numerology API v0.1.1
+* ✅ Added **Life Path**, **Compatibility**, and **Business** report generators
+* ✅ Quick Entry now supports Middle Name
+* ✅ Minor bug fixes and locale improvements
+
+### v1.0.1
+
+* ✅ Multi-language support (8 languages)
+* ✅ Complete UI translation system
+* ✅ Template designer system
 
 ### v1.0.0
-- ✅ Initial release
-- ✅ Personal Cycle Analysis reports
-- ✅ Client profile management
-- ✅ Analytics dashboard
-- ✅ Custom branding support
+
+* ✅ Initial release
+* ✅ Personal Cycle Analysis reports
+* ✅ Client profile management
+* ✅ Analytics dashboard
+* ✅ Custom branding support
 
 ---
 
