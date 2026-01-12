@@ -90,7 +90,7 @@ const ru = {
     practitioner_name: "Ваше имя / Название компании",
     practitioner_name_placeholder: "Др. Jane Smith",
     practitioner_website: "Веб-сайт (Опционально)",
-    practitioner_website_placeholder: "https://vashsait.ru",
+    practitioner_website_placeholder: "https://vashsait.ru или ссылка на социальный профиль",
     practitioner_email: "Электронная почта",
     practitioner_email_placeholder: "vy@primer.ru",
     save_personal_info: "Сохранить личную информацию",
@@ -143,5 +143,12 @@ const ru = {
     template_background_color: "Цвет фона страницы",
     template_title_size: "Размер шрифта заголовка",
     template_body_size: "Размер шрифта текста",
-    template_name_placeholder: "Мой пользовательский шаблон"
+    template_name_placeholder: "Мой пользовательский шаблон",
+    partner_first_name: "Имя Партнёра",
+    partner_middle_name: "Отчество Партнёра (Необязательно)",
+    partner_last_name: "Фамилия Партнёра",
+    partner_dob: "Дата Рождения Партнёра",
+    business_name: "Название Бизнеса",
+    business_phone: "Телефон Бизнеса",
+    business_email: "Email Бизнеса",
 };

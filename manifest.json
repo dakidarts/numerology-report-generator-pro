@@ -1,7 +1,7 @@
 {
   "manifest_version": 2,
   "name": "Numerology Report Generator Pro",
-  "version": "1.0.1",
+  "version": "1.0.2",
   "description": "Enterprise-grade numerology PDF report generator for spiritual coaches and professionals",
   
   "browser_specific_settings": {

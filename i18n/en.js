@@ -90,7 +90,7 @@ const en = {
     practitioner_name: "Your Name / Business Name",
     practitioner_name_placeholder: "Dr. Jane Smith",
     practitioner_website: "Website (Optional)",
-    practitioner_website_placeholder: "https://yoursite.com",
+    practitioner_website_placeholder: "https://yoursite.com or social profile link",
     practitioner_email: "Email",
     practitioner_email_placeholder: "you@example.com",
     save_personal_info: "Save Personal Info",
@@ -143,5 +143,13 @@ const en = {
     template_background_color: "Page Background Color",
     template_title_size: "Title Font Size",
     template_body_size: "Body Font Size",
-    template_name_placeholder: "My Custom Template"
+    template_name_placeholder: "My Custom Template",
+    partner_first_name: "Partner First Name",
+    partner_middle_name: "Partner Middle Name (Optional)",
+    partner_last_name: "Partner Last Name",
+    partner_dob: "Partner Date of Birth",
+    business_name: "Business Name",
+    business_phone: "Business Phone",
+    business_email: "Business Email",
+    
 };

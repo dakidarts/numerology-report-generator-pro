@@ -90,7 +90,7 @@ const es = {
     practitioner_name: "Su Nombre / Nombre del Negocio",
     practitioner_name_placeholder: "Dra. Jane Smith",
     practitioner_website: "Sitio Web (Opcional)",
-    practitioner_website_placeholder: "https://susite.com",
+    practitioner_website_placeholder: "https://susite.com o enlace de perfil social",
     practitioner_email: "Correo Electrónico",
     practitioner_email_placeholder: "usted@ejemplo.com",
     save_personal_info: "Guardar Información Personal",
@@ -143,5 +143,12 @@ const es = {
     template_background_color: "Color de Fondo de Página",
     template_title_size: "Tamaño de Fuente del Título",
     template_body_size: "Tamaño de Fuente del Cuerpo",
-    template_name_placeholder: "Mi Plantilla Personalizada"
+    template_name_placeholder: "Mi Plantilla Personalizada",
+    partner_first_name: "Nombre del Pareja",
+    partner_middle_name: "Segundo Nombre del Pareja (Opcional)",
+    partner_last_name: "Apellido del Pareja",
+    partner_dob: "Fecha de Nacimiento del Pareja",
+    business_name: "Nombre del Negocio",
+    business_phone: "Teléfono del Negocio",
+    business_email: "Correo Electrónico del Negocio",
 };

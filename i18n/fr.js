@@ -90,7 +90,7 @@ const fr = {
     practitioner_name: "Votre Nom / Nom de l'Entreprise",
     practitioner_name_placeholder: "Dr. Jane Smith",
     practitioner_website: "Site Web (Optionnel)",
-    practitioner_website_placeholder: "https://votresite.com",
+    practitioner_website_placeholder: "https://votresite.com ou lien de profil social",
     practitioner_email: "Email",
     practitioner_email_placeholder: "vous@exemple.com",
     save_personal_info: "Enregistrer les Infos Personnelles",
@@ -143,5 +143,12 @@ const fr = {
     template_background_color: "Couleur de Fond de Page",
     template_title_size: "Taille de la Police du Titre",
     template_body_size: "Taille de la Police du Corps",
-    template_name_placeholder: "Mon Modèle Personnalisé"
+    template_name_placeholder: "Mon Modèle Personnalisé",
+    partner_first_name: "Prénom du Partenaire",
+    partner_middle_name: "Deuxième prénom du Partenaire (Optionnel)",
+    partner_last_name: "Nom de Famille du Partenaire",
+    partner_dob: "Date de Naissance du Partenaire",
+    business_name: "Nom de l'Entreprise",
+    business_phone: "Téléphone de l'Entreprise",
+    business_email: "Email de l'Entreprise",
 };

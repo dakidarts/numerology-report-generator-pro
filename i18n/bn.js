@@ -90,7 +90,7 @@ const bn = {
     practitioner_name: "আপনার নাম / ব্যবসার নাম",
     practitioner_name_placeholder: "ডাঃ Jane Smith",
     practitioner_website: "ওয়েবসাইট (ঐচ্ছিক)",
-    practitioner_website_placeholder: "https://aapkarsite.com",
+    practitioner_website_placeholder: "https://aapkarsite.com অথবা সামাজিক প্রোফাইল লিঙ্ক",
     practitioner_email: "ইমেল",
     practitioner_email_placeholder: "aap@udaharan.com",
     save_personal_info: "ব্যক্তিগত তথ্য সংরক্ষণ করুন",
@@ -143,5 +143,12 @@ const bn = {
     template_background_color: "পৃষ্ঠা পটভূমি রঙ",
     template_title_size: "শিরোনাম ফন্ট আকার",
     template_body_size: "বডি ফন্ট আকার",
-    template_name_placeholder: "আমার কাস্টম টেমপ্লেট"
+    template_name_placeholder: "আমার কাস্টম টেমপ্লেট",
+    partner_first_name: "সঙ্গীর প্রথম নাম",
+    partner_middle_name: "মধ্যনাম (ঐচ্ছিক)",
+    partner_last_name: "সঙ্গীর শেষ নাম",
+    partner_dob: "সঙ্গীর জন্ম তারিখ",
+    business_name: "ব্যবসার নাম",
+    business_phone: "ব্যবসার ফোন",
+    business_email: "ব্যবসার ইমেইল",
 };

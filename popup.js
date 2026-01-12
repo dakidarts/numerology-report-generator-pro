@@ -1,1122 +1,1 @@
-// ==================== NUMEROLOGY REPORT GENERATOR PRO ====================
-
-// API Configuration
-const API_BASE = 'https://the-numerology-api.p.rapidapi.com';
-const API_HOST = 'the-numerology-api.p.rapidapi.com';
-
-// State Management
-let currentTab = 'generate';
-let profiles = [];
-let history = [];
-let settings = {
-    apiKey: '',
-    practitionerName: '',
-    practitionerEmail: '',
-    practitionerWebsite: '',
-    autoSaveReports: true,
-    showNotifications: true,
-    darkMode: false,
-    language: 'en'
-};
-
-// Initialize on DOM Load
-document.addEventListener('DOMContentLoaded', init);
-
-async function init() {
-    await loadSettings();
-    await loadProfiles();
-    await loadHistory();
-    await loadTemplates();
-    
-    // Initialize i18n
-    i18n.init(settings.language || 'en');
-    i18n.updateUI();
-    
-    applyTheme();
-    setupEventListeners();
-    updateAnalytics();
-    checkApiKey();
-    setCurrentYear();
-    renderTemplates();
-    updateTemplateSelect();
-}
-
-// ==================== EVENT LISTENERS ====================
-
-function setupEventListeners() {
-    // Tab Navigation
-    document.querySelectorAll('.tab').forEach(tab => {
-        tab.addEventListener('click', () => switchTab(tab.dataset.tab));
-    });
-
-    // Theme Toggle
-    document.getElementById('themeToggleBtn').addEventListener('click', toggleTheme);
-
-    // Settings Modal
-    document.getElementById('settingsBtn').addEventListener('click', openSettings);
-    document.getElementById('closeSettingsBtn').addEventListener('click', closeSettings);
-    document.getElementById('saveApiKeyBtn').addEventListener('click', saveApiKey);
-    document.getElementById('savePersonalInfoBtn').addEventListener('click', savePersonalInfo);
-    document.getElementById('savePreferencesBtn').addEventListener('click', savePreferences);
-
-    // Client Mode Toggle
-    document.querySelectorAll('input[name="clientMode"]').forEach(radio => {
-        radio.addEventListener('change', toggleClientMode);
-    });
-
-    // Profile Modal
-    document.getElementById('addProfileBtn').addEventListener('click', () => openProfileModal());
-    document.getElementById('closeProfileBtn').addEventListener('click', closeProfileModal);
-    document.getElementById('cancelProfileBtn').addEventListener('click', closeProfileModal);
-    document.getElementById('profileForm').addEventListener('submit', saveProfile);
-
-    // Profile Search
-    document.getElementById('profileSearch').addEventListener('input', filterProfiles);
-
-    // Template Management
-    document.getElementById('addTemplateBtn').addEventListener('click', () => openTemplateModal());
-    document.getElementById('closeTemplateBtn').addEventListener('click', closeTemplateModal);
-    document.getElementById('cancelTemplateBtn').addEventListener('click', closeTemplateModal);
-    document.getElementById('templateForm').addEventListener('submit', saveTemplate);
-    document.getElementById('reportType').addEventListener('change', updateTemplateSelect);
-
-    // Generate Report
-    document.getElementById('generateReportBtn').addEventListener('click', generateReport);
-
-    // History Actions
-    document.getElementById('exportHistoryBtn').addEventListener('click', exportHistory);
-    document.getElementById('clearHistoryBtn').addEventListener('click', clearHistory);
-
-    // Collapsible Sections
-    document.querySelectorAll('.collapsible-header').forEach(header => {
-        header.addEventListener('click', () => toggleCollapsible(header));
-    });
-
-    // Close modals on outside click
-    document.querySelectorAll('.modal').forEach(modal => {
-        modal.addEventListener('click', (e) => {
-            if (e.target === modal) {
-                modal.classList.remove('active');
-            }
-        });
-    });
-
-    document.getElementById('currentYear').textContent = new Date().getFullYear();
-
-}
-
-// ==================== STORAGE FUNCTIONS ====================
-
-async function loadSettings() {
-    try {
-        const stored = localStorage.getItem('numerology_settings');
-        if (stored) {
-            settings = { ...settings, ...JSON.parse(stored) };
-        }
-    } catch (error) {
-        console.error('Error loading settings:', error);
-    }
-}
-
-async function saveSettings() {
-    try {
-        localStorage.setItem('numerology_settings', JSON.stringify(settings));
-        showMessage('Settings saved successfully', 'success');
-    } catch (error) {
-        console.error('Error saving settings:', error);
-        showMessage('Failed to save settings', 'error');
-    }
-}
-
-async function loadProfiles() {
-    try {
-        const stored = localStorage.getItem('numerology_profiles');
-        profiles = stored ? JSON.parse(stored) : [];
-        renderProfiles();
-        updateProfileSelect();
-    } catch (error) {
-        console.error('Error loading profiles:', error);
-    }
-}
-
-async function saveProfilesToStorage() {
-    try {
-        localStorage.setItem('numerology_profiles', JSON.stringify(profiles));
-    } catch (error) {
-        console.error('Error saving profiles:', error);
-    }
-}
-
-async function loadHistory() {
-    try {
-        const stored = localStorage.getItem('numerology_history');
-        history = stored ? JSON.parse(stored) : [];
-        renderHistory();
-    } catch (error) {
-        console.error('Error loading history:', error);
-    }
-}
-
-async function saveHistoryToStorage() {
-    try {
-        localStorage.setItem('numerology_history', JSON.stringify(history));
-    } catch (error) {
-        console.error('Error saving history:', error);
-    }
-}
-
-// ==================== TAB NAVIGATION ====================
-
-function switchTab(tabName) {
-    currentTab = tabName;
-    
-    document.querySelectorAll('.tab').forEach(tab => {
-        tab.classList.toggle('active', tab.dataset.tab === tabName);
-    });
-
-    document.querySelectorAll('.tab-content').forEach(content => {
-        content.classList.toggle('active', content.id === `${tabName}Tab`);
-    });
-
-    if (tabName === 'profiles') renderProfiles();
-    if (tabName === 'designer') renderTemplates();
-    if (tabName === 'history') renderHistory();
-    if (tabName === 'analytics') updateAnalytics();
-}
-
-// ==================== THEME MANAGEMENT ====================
-
-function toggleTheme() {
-    settings.darkMode = !settings.darkMode;
-    applyTheme();
-    saveSettings();
-}
-
-function applyTheme() {
-    if (settings.darkMode) {
-        document.body.classList.add('dark-mode');
-        document.getElementById('themeToggleBtn').innerHTML = '<i class="fas fa-sun"></i>';
-    } else {
-        document.body.classList.remove('dark-mode');
-        document.getElementById('themeToggleBtn').innerHTML = '<i class="fas fa-moon"></i>';
-    }
-}
-
-// ==================== SETTINGS MODAL ====================
-
-function openSettings() {
-    document.getElementById('apiKeyInput').value = settings.apiKey || '';
-    document.getElementById('practitionerName').value = settings.practitionerName || '';
-    document.getElementById('practitionerEmail').value = settings.practitionerEmail || '';
-    document.getElementById('practitionerWebsite').value = settings.practitionerWebsite || '';
-    document.getElementById('languageSelect').value = settings.language || 'en';
-    document.getElementById('autoSaveReports').checked = settings.autoSaveReports;
-    document.getElementById('showNotifications').checked = settings.showNotifications;
-    
-    document.getElementById('settingsModal').classList.add('active');
-}
-
-function closeSettings() {
-    document.getElementById('settingsModal').classList.remove('active');
-}
-
-async function saveApiKey() {
-    const apiKey = document.getElementById('apiKeyInput').value.trim();
-    
-    if (!apiKey) {
-        showMessage('Please enter an API key', 'error');
-        return;
-    }
-
-    settings.apiKey = apiKey;
-    await saveSettings();
-    checkApiKey();
-}
-
-async function savePersonalInfo() {
-    settings.practitionerName = document.getElementById('practitionerName').value.trim();
-    settings.practitionerEmail = document.getElementById('practitionerEmail').value.trim();
-    settings.practitionerWebsite = document.getElementById('practitionerWebsite').value.trim();
-    await saveSettings();
-}
-
-async function savePreferences() {
-    const newLanguage = document.getElementById('languageSelect').value;
-    const languageChanged = newLanguage !== settings.language;
-    
-    settings.language = newLanguage;
-    settings.autoSaveReports = document.getElementById('autoSaveReports').checked;
-    settings.showNotifications = document.getElementById('showNotifications').checked;
-    await saveSettings();
-    
-    if (languageChanged) {
-        i18n.setLanguage(newLanguage);
-    }
-}
-
-function checkApiKey() {
-    if (!settings.apiKey) {
-        showMessage('Please configure your API key to start generating reports', 'info');
-    }
-}
-
-// ==================== CLIENT MODE TOGGLE ====================
-
-function toggleClientMode() {
-    const mode = document.querySelector('input[name="clientMode"]:checked').value;
-    
-    if (mode === 'existing') {
-        document.getElementById('existingProfileMode').style.display = 'block';
-        document.getElementById('quickEntryMode').style.display = 'none';
-    } else {
-        document.getElementById('existingProfileMode').style.display = 'none';
-        document.getElementById('quickEntryMode').style.display = 'block';
-    }
-}
-
-// ==================== PROFILE MANAGEMENT ====================
-
-function openProfileModal(profileId = null) {
-    const modal = document.getElementById('profileModal');
-    const form = document.getElementById('profileForm');
-    form.reset();
-    
-    if (profileId) {
-        const profile = profiles.find(p => p.id === profileId);
-        if (profile) {
-            document.getElementById('profileModalTitle').innerHTML = '<i class="fas fa-user-edit"></i> ' + i18n.t('edit_client_profile');
-            document.getElementById('profileId').value = profile.id;
-            document.getElementById('profileFirstName').value = profile.firstName || '';
-            document.getElementById('profileMiddleName').value = profile.middleName || '';
-            document.getElementById('profileLastName').value = profile.lastName || '';
-            document.getElementById('profileShortName').value = profile.shortName || '';
-            document.getElementById('profileDob').value = profile.dob;
-            document.getElementById('profileBirthPlace').value = profile.birthPlace || '';
-            document.getElementById('profileCity').value = profile.city || '';
-            document.getElementById('profileCountry').value = profile.country || '';
-            document.getElementById('profileTimezone').value = profile.timezone || '';
-            document.getElementById('profileEmail').value = profile.email || '';
-            document.getElementById('profilePhone').value = profile.phone || '';
-            document.getElementById('profileNotes').value = profile.notes || '';
-        }
-    } else {
-        document.getElementById('profileModalTitle').innerHTML = '<i class="fas fa-user-plus"></i> ' + i18n.t('add_client_profile');
-        document.getElementById('profileId').value = '';
-    }
-    
-    modal.classList.add('active');
-}
-
-function closeProfileModal() {
-    document.getElementById('profileModal').classList.remove('active');
-}
-
-async function saveProfile(e) {
-    e.preventDefault();
-    
-    const profileId = document.getElementById('profileId').value;
-    const firstName = document.getElementById('profileFirstName').value.trim();
-    const lastName = document.getElementById('profileLastName').value.trim();
-    
-    if (!firstName || !lastName) {
-        showMessage('First name and last name are required', 'error');
-        return;
-    }
-    
-    const profileData = {
-        firstName,
-        middleName: document.getElementById('profileMiddleName').value.trim(),
-        lastName,
-        shortName: document.getElementById('profileShortName').value.trim(),
-        dob: document.getElementById('profileDob').value,
-        birthPlace: document.getElementById('profileBirthPlace').value.trim(),
-        city: document.getElementById('profileCity').value.trim(),
-        country: document.getElementById('profileCountry').value.trim(),
-        timezone: document.getElementById('profileTimezone').value,
-        email: document.getElementById('profileEmail').value.trim(),
-        phone: document.getElementById('profilePhone').value.trim(),
-        notes: document.getElementById('profileNotes').value.trim(),
-        // Computed full name for display
-        name: `${firstName} ${document.getElementById('profileMiddleName').value.trim() ? document.getElementById('profileMiddleName').value.trim() + ' ' : ''}${lastName}`
-    };
-
-    if (profileId) {
-        // Edit existing
-        const index = profiles.findIndex(p => p.id === profileId);
-        if (index !== -1) {
-            profiles[index] = { ...profiles[index], ...profileData };
-            showMessage('Profile updated successfully', 'success');
-        }
-    } else {
-        // Add new
-        const newProfile = {
-            id: Date.now().toString(),
-            ...profileData,
-            createdAt: new Date().toISOString(),
-            reportsGenerated: 0
-        };
-        profiles.push(newProfile);
-        showMessage('Profile created successfully', 'success');
-    }
-
-    await saveProfilesToStorage();
-    renderProfiles();
-    updateProfileSelect();
-    closeProfileModal();
-}
-
-async function deleteProfile(profileId) {
-    if (!confirm('Are you sure you want to delete this profile?')) return;
-
-    profiles = profiles.filter(p => p.id !== profileId);
-    await saveProfilesToStorage();
-    renderProfiles();
-    updateProfileSelect();
-    showMessage('Profile deleted', 'success');
-}
-
-function renderProfiles() {
-    const container = document.getElementById('profilesList');
-    
-    if (profiles.length === 0) {
-        container.textContent = '';
-        const emptyDiv = document.createElement('div');
-        emptyDiv.className = 'empty-state';
-        emptyDiv.innerHTML = '<i class="fas fa-user-friends"></i><p>' + i18n.t('no_profiles') + '</p><small>' + i18n.t('no_profiles_sub') + '</small>';
-        container.appendChild(emptyDiv);
-        return;
-    }
-
-    container.textContent = '';
-    profiles.forEach(profile => {
-        const card = document.createElement('div');
-        card.className = 'profile-card';
-        
-        const header = document.createElement('div');
-        header.className = 'profile-card-header';
-        
-        const nameDiv = document.createElement('div');
-        nameDiv.className = 'profile-name';
-        nameDiv.textContent = profile.name;
-        
-        const actionsDiv = document.createElement('div');
-        actionsDiv.className = 'profile-actions';
-        
-        const editBtn = document.createElement('button');
-        editBtn.className = 'icon-btn';
-        editBtn.title = 'Edit';
-        editBtn.onclick = () => openProfileModal(profile.id);
-        editBtn.innerHTML = '<i class="fas fa-edit"></i>';
-        
-        const deleteBtn = document.createElement('button');
-        deleteBtn.className = 'icon-btn';
-        deleteBtn.title = 'Delete';
-        deleteBtn.onclick = () => deleteProfile(profile.id);
-        deleteBtn.innerHTML = '<i class="fas fa-trash"></i>';
-        
-        actionsDiv.appendChild(editBtn);
-        actionsDiv.appendChild(deleteBtn);
-        
-        header.appendChild(nameDiv);
-        header.appendChild(actionsDiv);
-        
-        const details = document.createElement('div');
-        details.className = 'profile-details';
-        
-        const dobDiv = document.createElement('div');
-        dobDiv.innerHTML = '<i class="fas fa-birthday-cake"></i>';
-        dobDiv.appendChild(document.createTextNode(' ' + formatDate(profile.dob)));
-        details.appendChild(dobDiv);
-        
-        if (profile.email) {
-            const emailDiv = document.createElement('div');
-            emailDiv.innerHTML = '<i class="fas fa-envelope"></i>';
-            emailDiv.appendChild(document.createTextNode(' ' + profile.email));
-            details.appendChild(emailDiv);
-        }
-        
-        if (profile.phone) {
-            const phoneDiv = document.createElement('div');
-            phoneDiv.innerHTML = '<i class="fas fa-phone"></i>';
-            phoneDiv.appendChild(document.createTextNode(' ' + profile.phone));
-            details.appendChild(phoneDiv);
-        }
-        
-        const reportsDiv = document.createElement('div');
-        reportsDiv.innerHTML = '<i class="fas fa-file-pdf"></i>';
-        reportsDiv.appendChild(document.createTextNode(' ' + (profile.reportsGenerated || 0) + ' ' + i18n.t('reports_generated')));
-        details.appendChild(reportsDiv);
-        
-        card.appendChild(header);
-        card.appendChild(details);
-        container.appendChild(card);
-    });
-}
-
-function updateProfileSelect() {
-    const select = document.getElementById('profileSelect');
-    select.textContent = '';
-    
-    if (profiles.length === 0) {
-        const option = document.createElement('option');
-        option.value = '';
-        option.textContent = i18n.t('select_profile_placeholder');
-        select.appendChild(option);
-        return;
-    }
-
-    const defaultOption = document.createElement('option');
-    defaultOption.value = '';
-    defaultOption.textContent = i18n.t('select_profile_choose');
-    select.appendChild(defaultOption);
-    
-    profiles.forEach(p => {
-        const option = document.createElement('option');
-        option.value = p.id;
-        option.textContent = `${p.name} (${formatDate(p.dob)})`;
-        select.appendChild(option);
-    });
-}
-
-function filterProfiles() {
-    const searchTerm = document.getElementById('profileSearch').value.toLowerCase();
-    const cards = document.querySelectorAll('.profile-card');
-    
-    cards.forEach(card => {
-        const text = card.textContent.toLowerCase();
-        card.style.display = text.includes(searchTerm) ? 'block' : 'none';
-    });
-}
-
-// ==================== REPORT GENERATION ====================
-
-async function generateReport() {
-    if (!settings.apiKey) {
-        showMessage('Please configure your API key first', 'error');
-        openSettings();
-        return;
-    }
-
-    const reportType = document.getElementById('reportType').value;
-    const clientMode = document.querySelector('input[name="clientMode"]:checked').value;
-    
-    let clientData;
-    
-    if (clientMode === 'existing') {
-        const profileId = document.getElementById('profileSelect').value;
-        if (!profileId) {
-            showMessage('Please select a client profile', 'error');
-            return;
-        }
-        const profile = profiles.find(p => p.id === profileId);
-        if (!profile) {
-            showMessage('Profile not found', 'error');
-            return;
-        }
-        clientData = {
-            id: profile.id,
-            name: profile.name,
-            dob: profile.dob,
-            email: profile.email
-        };
-    } else {
-        const firstName = document.getElementById('quickFirstName').value.trim();
-        const lastName = document.getElementById('quickLastName').value.trim();
-        const dob = document.getElementById('quickDob').value;
-        
-        if (!firstName || !lastName || !dob) {
-            showMessage('Please enter client first name, last name and date of birth', 'error');
-            return;
-        }
-        
-        clientData = {
-            id: null,
-            firstName: document.getElementById('quickFirstName').value.trim(),
-            lastName: document.getElementById('quickLastName').value.trim(),
-            name: `${document.getElementById('quickFirstName').value.trim()} ${document.getElementById('quickLastName').value.trim()}`,
-            dob: document.getElementById('quickDob').value,
-            birthPlace: document.getElementById('quickBirthPlace').value.trim(),
-            email: document.getElementById('quickEmail').value.trim()
-        };
-    }
-
-    const targetYear = parseInt(document.getElementById('targetYear').value);
-    const customization = {
-        title: document.getElementById('reportTitle').value.trim()
-    };
-
-    try {
-        showLoading(true, 'Connecting to Numerology API...');
-        
-        if (reportType === 'personal-cycle') {
-            await generatePersonalCycleReport(clientData, targetYear, customization);
-        }
-        
-    } catch (error) {
-        console.error('Report generation error:', error);
-        showMessage('Failed to generate report: ' + error.message, 'error');
-    } finally {
-        showLoading(false);
-    }
-}
-
-async function generatePersonalCycleReport(clientData, targetYear, customization) {
-    // Update progress
-    updateProgress(20, 'Fetching personal cycle data...');
-    
-    // Fetch data from API
-    const apiData = await fetchPersonalCycleData(clientData.dob, targetYear);
-    
-    updateProgress(50, 'Processing numerology calculations...');
-    
-    // Get selected template
-    const templateId = document.getElementById('templateSelect').value;
-    const template = templateId ? getTemplateById(templateId) : null;
-    
-    // Generate PDF
-    const pdfData = await createPersonalCyclePDF(apiData, clientData, targetYear, customization, template);
-    
-    updateProgress(90, 'Finalizing report...');
-    
-    // Save to history
-    if (settings.autoSaveReports) {
-        await saveToHistory({
-            type: 'personal-cycle',
-            clientName: clientData.name,
-            clientDob: clientData.dob,
-            targetYear,
-            generatedAt: new Date().toISOString(),
-            profileId: clientData.id
-        });
-        
-        // Update profile report count
-        if (clientData.id) {
-            const profile = profiles.find(p => p.id === clientData.id);
-            if (profile) {
-                profile.reportsGenerated = (profile.reportsGenerated || 0) + 1;
-                await saveProfilesToStorage();
-            }
-        }
-    }
-    
-    updateProgress(100, 'Complete!');
-    
-    // Download PDF
-    downloadPDF(pdfData, `Numerology_Report_${clientData.name}_${targetYear}.pdf`);
-    
-    showMessage('Report generated successfully!', 'success');
-    
-    if (settings.showNotifications) {
-        showNotification('Report Ready', `Personal Cycle Report for ${clientData.name} has been generated.`);
-    }
-}
-
-async function fetchPersonalCycleData(dob, targetYear) {
-    const url = `${API_BASE}/personal-cycle-report?dob=${dob}&target_year=${targetYear}`;
-    
-    console.log('API Request URL:', url);
-    console.log('API Key (first 10 chars):', settings.apiKey.substring(0, 10) + '...');
-    
-    const response = await fetch(url, {
-        method: 'GET',
-        headers: {
-            'X-RapidAPI-Key': settings.apiKey,
-            'X-RapidAPI-Host': API_HOST,
-            'Content-Type': 'application/json'
-        }
-    });
-
-    console.log('Response status:', response.status);
-    console.log('Response headers:', response.headers);
-    
-    if (!response.ok) {
-        const errorText = await response.text();
-        console.error('API Error Response:', errorText);
-        throw new Error(`API request failed: ${response.status} - ${errorText}`);
-    }
-
-    return await response.json();
-}
-
-// ==================== PDF GENERATION ====================
-
-function downloadPDF(doc, filename) {
-    doc.save(filename);
-}
-
-// ==================== HISTORY MANAGEMENT ====================
-
-async function saveToHistory(entry) {
-    history.unshift(entry);
-    if (history.length > 100) history.splice(100);
-    await saveHistoryToStorage();
-    renderHistory();
-}
-
-function renderHistory() {
-    const container = document.getElementById('historyList');
-    
-    if (history.length === 0) {
-        container.textContent = '';
-        const emptyDiv = document.createElement('div');
-        emptyDiv.className = 'empty-state';
-        emptyDiv.innerHTML = '<i class="fas fa-inbox"></i><p>' + i18n.t('no_history') + '</p>';
-        container.appendChild(emptyDiv);
-        return;
-    }
-
-    container.textContent = '';
-    history.slice(0, 50).forEach(entry => {
-        const item = document.createElement('div');
-        item.className = 'history-item';
-        
-        const header = document.createElement('div');
-        header.className = 'history-header';
-        
-        const titleDiv = document.createElement('div');
-        titleDiv.className = 'history-title';
-        titleDiv.textContent = entry.clientName;
-        
-        const dateDiv = document.createElement('div');
-        dateDiv.className = 'history-date';
-        dateDiv.textContent = formatDateTime(entry.generatedAt);
-        
-        header.appendChild(titleDiv);
-        header.appendChild(dateDiv);
-        
-        const meta = document.createElement('div');
-        meta.className = 'history-meta';
-        
-        const badge = document.createElement('span');
-        badge.className = 'badge info';
-        badge.textContent = entry.type;
-        
-        const yearSpan = document.createElement('span');
-        yearSpan.innerHTML = '<i class="fas fa-calendar-alt"></i>';
-        yearSpan.appendChild(document.createTextNode(' Year ' + entry.targetYear));
-        
-        const dobSpan = document.createElement('span');
-        dobSpan.innerHTML = '<i class="fas fa-birthday-cake"></i>';
-        dobSpan.appendChild(document.createTextNode(' ' + formatDate(entry.clientDob)));
-        
-        meta.appendChild(badge);
-        meta.appendChild(yearSpan);
-        meta.appendChild(dobSpan);
-        
-        item.appendChild(header);
-        item.appendChild(meta);
-        container.appendChild(item);
-    });
-}
-
-async function exportHistory() {
-    if (history.length === 0) {
-        showMessage('No history to export', 'error');
-        return;
-    }
-
-    const data = JSON.stringify(history, null, 2);
-    const blob = new Blob([data], { type: 'application/json' });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = `numerology-history-${Date.now()}.json`;
-    a.click();
-    URL.revokeObjectURL(url);
-    
-    showMessage('History exported successfully', 'success');
-}
-
-async function clearHistory() {
-    if (!confirm('Are you sure you want to clear all report history?')) return;
-
-    history = [];
-    await saveHistoryToStorage();
-    renderHistory();
-    updateAnalytics();
-    showMessage('History cleared', 'success');
-}
-
-// ==================== ANALYTICS ====================
-
-function updateAnalytics() {
-    // Total Reports
-    document.getElementById('totalReports').textContent = history.length;
-    
-    // Total Profiles
-    document.getElementById('totalProfiles').textContent = profiles.length;
-    
-    // This Month Reports
-    const now = new Date();
-    const thisMonth = history.filter(h => {
-        const date = new Date(h.generatedAt);
-        return date.getMonth() === now.getMonth() && 
-               date.getFullYear() === now.getFullYear();
-    }).length;
-    document.getElementById('thisMonthReports').textContent = thisMonth;
-    
-    // Most Used Report Type
-    const typeCounts = {};
-    history.forEach(h => {
-        typeCounts[h.type] = (typeCounts[h.type] || 0) + 1;
-    });
-    const mostUsed = Object.keys(typeCounts).length > 0 ? 
-        Object.keys(typeCounts).reduce((a, b) => typeCounts[a] > typeCounts[b] ? a : b) :
-        'N/A';
-    document.getElementById('mostUsedReport').textContent = 
-        mostUsed === 'personal-cycle' ? 'Personal Cycle' : mostUsed;
-    
-    // Update chart if available
-    updateChart();
-}
-
-function updateChart() {
-    const canvas = document.getElementById('reportsChart');
-    if (!canvas) return;
-    
-    const ctx = canvas.getContext('2d');
-    
-    // Get last 30 days data
-    const last30Days = Array.from({ length: 30 }, (_, i) => {
-        const date = new Date();
-        date.setDate(date.getDate() - (29 - i));
-        return date.toISOString().split('T')[0];
-    });
-    
-    const counts = last30Days.map(date => {
-        return history.filter(h => h.generatedAt.startsWith(date)).length;
-    });
-    
-    // Clear previous chart
-    if (window.myChart) {
-        window.myChart.destroy();
-    }
-    
-    window.myChart = new Chart(ctx, {
-        type: 'line',
-        data: {
-            labels: last30Days.map(d => new Date(d).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })),
-            datasets: [{
-                label: 'Reports Generated',
-                data: counts,
-                borderColor: 'rgb(107, 70, 193)',
-                backgroundColor: 'rgba(107, 70, 193, 0.1)',
-                tension: 0.4,
-                fill: true
-            }]
-        },
-        options: {
-            responsive: true,
-            maintainAspectRatio: true,
-            plugins: {
-                legend: {
-                    display: false
-                }
-            },
-            scales: {
-                y: {
-                    beginAtZero: true,
-                    ticks: {
-                        stepSize: 1
-                    }
-                }
-            }
-        }
-    });
-}
-
-// ==================== UI HELPERS ====================
-
-function showLoading(show, text = 'Processing...') {
-    const container = document.getElementById('loadingContainer');
-    const loadingText = document.getElementById('loadingText');
-    const btn = document.getElementById('generateReportBtn');
-    
-    container.style.display = show ? 'block' : 'none';
-    btn.disabled = show;
-    
-    if (show) {
-        loadingText.textContent = text;
-        updateProgress(10, text);
-    } else {
-        updateProgress(0, '');
-    }
-}
-
-function updateProgress(percent, text) {
-    const progressFill = document.getElementById('progressFill');
-    const loadingText = document.getElementById('loadingText');
-    
-    if (progressFill) progressFill.style.width = `${percent}%`;
-    if (loadingText && text) loadingText.textContent = text;
-}
-
-function showMessage(text, type = 'info') {
-    const container = document.getElementById('messageContainer');
-    const message = document.createElement('div');
-    message.className = `message ${type}`;
-    
-    const icon = type === 'success' ? 'fa-check-circle' :
-                 type === 'error' ? 'fa-exclamation-circle' :
-                 type === 'warning' ? 'fa-exclamation-triangle' :
-                 'fa-info-circle';
-    
-    const iconEl = document.createElement('i');
-    iconEl.className = `fas ${icon}`;
-    
-    const textEl = document.createElement('span');
-    textEl.textContent = text;
-    
-    message.appendChild(iconEl);
-    message.appendChild(textEl);
-    container.appendChild(message);
-    
-    setTimeout(() => {
-        message.remove();
-    }, 5000);
-}
-
-function showNotification(title, message) {
-    if (typeof browser !== 'undefined' && browser.notifications) {
-        browser.notifications.create({
-            type: 'basic',
-            iconUrl: 'icons/icon48.png',
-            title: title,
-            message: message
-        });
-    }
-}
-
-function toggleCollapsible(header) {
-    header.classList.toggle('active');
-    const content = header.nextElementSibling;
-    content.classList.toggle('active');
-}
-
-// ==================== UTILITY FUNCTIONS ====================
-
-function escapeHtml(text) {
-    const div = document.createElement('div');
-    div.textContent = text;
-    return div.innerHTML;
-}
-
-function formatDate(dateStr) {
-    if (!dateStr) return 'N/A';
-    const date = new Date(dateStr);
-    return date.toLocaleDateString('en-US', { 
-        year: 'numeric', 
-        month: 'long', 
-        day: 'numeric' 
-    });
-}
-
-function formatDateTime(dateStr) {
-    if (!dateStr) return 'N/A';
-    const date = new Date(dateStr);
-    return date.toLocaleDateString('en-US', { 
-        year: 'numeric', 
-        month: 'short', 
-        day: 'numeric',
-        hour: '2-digit',
-        minute: '2-digit'
-    });
-}
-
-function setCurrentYear() {
-    const yearEl = document.getElementById('currentYear');
-    if (yearEl) {
-        yearEl.textContent = new Date().getFullYear();
-    }
-}
-
-// Make functions globally accessible for onclick handlers
-window.openProfileModal = openProfileModal;
-window.deleteProfile = deleteProfile;
-
-
-// ==================== TEMPLATE MANAGEMENT ====================
-
-function renderTemplates() {
-    const container = document.getElementById('templatesList');
-    
-    if (!templates || templates.length === 0) {
-        container.textContent = '';
-        const emptyDiv = document.createElement('div');
-        emptyDiv.className = 'empty-state';
-        emptyDiv.innerHTML = '<i class="fas fa-paint-brush"></i><p>' + i18n.t('no_templates') + '</p>';
-        container.appendChild(emptyDiv);
-        return;
-    }
-
-    container.textContent = '';
-    templates.forEach(template => {
-        const card = document.createElement('div');
-        card.className = 'profile-card';
-        
-        const header = document.createElement('div');
-        header.className = 'profile-card-header';
-        
-        const nameDiv = document.createElement('div');
-        nameDiv.className = 'profile-name';
-        nameDiv.textContent = template.name + (template.isDefault ? ' (' + i18n.t('default_template') + ')' : '');
-        
-        const actionsDiv = document.createElement('div');
-        actionsDiv.className = 'profile-actions';
-        
-        const editBtn = document.createElement('button');
-        editBtn.className = 'icon-btn';
-        editBtn.title = 'Edit';
-        editBtn.onclick = () => openTemplateModal(template.id);
-        editBtn.innerHTML = '<i class="fas fa-edit"></i>';
-        actionsDiv.appendChild(editBtn);
-        
-        if (!template.isDefault) {
-            const deleteBtn = document.createElement('button');
-            deleteBtn.className = 'icon-btn';
-            deleteBtn.title = 'Delete';
-            deleteBtn.onclick = () => deleteTemplateConfirm(template.id);
-            deleteBtn.innerHTML = '<i class="fas fa-trash"></i>';
-            actionsDiv.appendChild(deleteBtn);
-        }
-        
-        header.appendChild(nameDiv);
-        header.appendChild(actionsDiv);
-        
-        const details = document.createElement('div');
-        details.className = 'profile-details';
-        
-        const typeDiv = document.createElement('div');
-        typeDiv.innerHTML = '<i class="fas fa-scroll"></i>';
-        typeDiv.appendChild(document.createTextNode(' ' + template.reportType));
-        details.appendChild(typeDiv);
-        
-        const fontDiv = document.createElement('div');
-        fontDiv.innerHTML = '<i class="fas fa-font"></i>';
-        fontDiv.appendChild(document.createTextNode(' ' + template.fontFamily));
-        details.appendChild(fontDiv);
-        
-        const colorDiv = document.createElement('div');
-        colorDiv.innerHTML = '<i class="fas fa-palette"></i>';
-        colorDiv.appendChild(document.createTextNode(' ' + template.colors.primary));
-        details.appendChild(colorDiv);
-        
-        card.appendChild(header);
-        card.appendChild(details);
-        container.appendChild(card);
-    });
-}
-
-function updateTemplateSelect() {
-    const reportType = document.getElementById('reportType').value;
-    const select = document.getElementById('templateSelect');
-    select.textContent = '';
-    
-    const reportTemplates = getTemplatesByReportType(reportType);
-    
-    if (reportTemplates.length === 0) {
-        const option = document.createElement('option');
-        option.value = '';
-        option.textContent = i18n.t('select_template_placeholder');
-        select.appendChild(option);
-        return;
-    }
-
-    const defaultOption = document.createElement('option');
-    defaultOption.value = '';
-    defaultOption.textContent = i18n.t('select_template_placeholder');
-    select.appendChild(defaultOption);
-    
-    reportTemplates.forEach(t => {
-        const option = document.createElement('option');
-        option.value = t.id;
-        option.textContent = t.name + (t.isDefault ? ' (' + i18n.t('default_template') + ')' : '');
-        if (t.isDefault) option.selected = true;
-        select.appendChild(option);
-    });
-}
-
-function openTemplateModal(templateId = null) {
-    const modal = document.getElementById('templateModal');
-    const form = document.getElementById('templateForm');
-    form.reset();
-    
-    if (templateId) {
-        const template = getTemplateById(templateId);
-        if (template) {
-            document.getElementById('templateModalTitle').innerHTML = '<i class="fas fa-palette"></i> ' + i18n.t('edit_template');
-            document.getElementById('templateId').value = template.id;
-            document.getElementById('templateName').value = template.name;
-            document.getElementById('templateReportType').value = template.reportType;
-            document.getElementById('templateFontFamily').value = template.fontFamily;
-            document.getElementById('templateBodyFontFamily').value = template.bodyFontFamily || template.fontFamily;
-            document.getElementById('templatePrimaryColor').value = template.colors.primary;
-            document.getElementById('templateSecondaryColor').value = template.colors.secondary;
-            document.getElementById('templateAccentColor').value = template.colors.accent;
-            document.getElementById('templateBackgroundColor').value = template.colors.background || '#FFFFFF';
-            document.getElementById('templateTitleSize').value = template.fontSize.title;
-            document.getElementById('templateBodySize').value = template.fontSize.body;
-        }
-    } else {
-        document.getElementById('templateModalTitle').innerHTML = '<i class="fas fa-palette"></i> ' + i18n.t('create_template');
-        document.getElementById('templateId').value = '';
-    }
-    
-    modal.classList.add('active');
-}
-
-function closeTemplateModal() {
-    document.getElementById('templateModal').classList.remove('active');
-}
-
-async function saveTemplate(e) {
-    e.preventDefault();
-    
-    const templateId = document.getElementById('templateId').value;
-    const templateData = {
-        name: document.getElementById('templateName').value.trim(),
-        reportType: document.getElementById('templateReportType').value,
-        fontFamily: document.getElementById('templateFontFamily').value,
-        bodyFontFamily: document.getElementById('templateBodyFontFamily').value,
-        colors: {
-            primary: document.getElementById('templatePrimaryColor').value,
-            secondary: document.getElementById('templateSecondaryColor').value,
-            accent: document.getElementById('templateAccentColor').value,
-            background: document.getElementById('templateBackgroundColor').value,
-        },
-        fontSize: {
-            title: parseInt(document.getElementById('templateTitleSize').value),
-            subtitle: 14,
-            sectionHeader: 18,
-            subsectionHeader: 13,
-            body: parseInt(document.getElementById('templateBodySize').value)
-        }
-    };
-
-    if (templateId) {
-        updateTemplate(templateId, templateData);
-        showMessage('Template updated successfully', 'success');
-    } else {
-        createTemplate(templateData);
-        showMessage('Template created successfully', 'success');
-    }
-
-    renderTemplates();
-    updateTemplateSelect();
-    closeTemplateModal();
-}
-
-async function deleteTemplateConfirm(templateId) {
-    if (!confirm('Are you sure you want to delete this template?')) return;
-
-    if (deleteTemplate(templateId)) {
-        renderTemplates();
-        updateTemplateSelect();
-        showMessage('Template deleted', 'success');
-    } else {
-        showMessage('Cannot delete default template', 'error');
-    }
-}
-
-window.openTemplateModal = openTemplateModal;
-window.deleteTemplateConfirm = deleteTemplateConfirm;
+// ==================== NUMEROLOGY REPORT GENERATOR PRO ====================// API Configurationconst API_BASE = 'https://the-numerology-api.p.rapidapi.com';const API_HOST = 'the-numerology-api.p.rapidapi.com';// State Managementlet currentTab = 'generate';let profiles = [];let history = [];let settings = {    apiKey: '',    practitionerName: '',    practitionerEmail: '',    practitionerWebsite: '',    autoSaveReports: true,    showNotifications: true,    darkMode: false,    language: 'en'};// Initialize on DOM Loaddocument.addEventListener('DOMContentLoaded', init);async function init() {    await loadSettings();    await loadProfiles();    await loadHistory();    await loadTemplates();        // Initialize i18n    i18n.init(settings.language || 'en');    renderDynamicReportParams();    i18n.updateUI();        applyTheme();    setupEventListeners();    updateAnalytics();    checkApiKey();    setCurrentYear();    renderTemplates();    updateTemplateSelect();}// ==================== EVENT LISTENERS ====================function setupEventListeners() {    // Tab Navigation    document.querySelectorAll('.tab').forEach(tab => {        tab.addEventListener('click', () => switchTab(tab.dataset.tab));    });    // Theme Toggle    document.getElementById('themeToggleBtn').addEventListener('click', toggleTheme);    // Settings Modal    document.getElementById('settingsBtn').addEventListener('click', openSettings);    document.getElementById('closeSettingsBtn').addEventListener('click', closeSettings);    document.getElementById('saveApiKeyBtn').addEventListener('click', saveApiKey);    document.getElementById('savePersonalInfoBtn').addEventListener('click', savePersonalInfo);    document.getElementById('savePreferencesBtn').addEventListener('click', savePreferences);    // Client Mode Toggle    document.querySelectorAll('input[name="clientMode"]').forEach(radio => {        radio.addEventListener('change', toggleClientMode);    });    // Profile Modal    document.getElementById('addProfileBtn').addEventListener('click', () => openProfileModal());    document.getElementById('closeProfileBtn').addEventListener('click', closeProfileModal);    document.getElementById('cancelProfileBtn').addEventListener('click', closeProfileModal);    document.getElementById('profileForm').addEventListener('submit', saveProfile);    // Profile Search    document.getElementById('profileSearch').addEventListener('input', filterProfiles);    // Template Management    document.getElementById('addTemplateBtn').addEventListener('click', () => openTemplateModal());    document.getElementById('closeTemplateBtn').addEventListener('click', closeTemplateModal);    document.getElementById('cancelTemplateBtn').addEventListener('click', closeTemplateModal);    document.getElementById('templateForm').addEventListener('submit', saveTemplate);    document.getElementById('reportType').addEventListener('change', () => { updateTemplateSelect(); renderDynamicReportParams(); });    // Generate Report    document.getElementById('generateReportBtn').addEventListener('click', generateReport);    // History Actions    document.getElementById('exportHistoryBtn').addEventListener('click', exportHistory);    document.getElementById('clearHistoryBtn').addEventListener('click', clearHistory);    // Collapsible Sections    document.querySelectorAll('.collapsible-header').forEach(header => {        header.addEventListener('click', () => toggleCollapsible(header));    });    // Close modals on outside click    document.querySelectorAll('.modal').forEach(modal => {        modal.addEventListener('click', (e) => {            if (e.target === modal) {                modal.classList.remove('active');            }        });    });    document.getElementById('currentYear').textContent = new Date().getFullYear();}// ==================== STORAGE FUNCTIONS ====================async function loadSettings() {    try {        const stored = localStorage.getItem('numerology_settings');        if (stored) {            settings = { ...settings, ...JSON.parse(stored) };        }    } catch (error) {        console.error('Error loading settings:', error);    }}async function saveSettings() {    try {        localStorage.setItem('numerology_settings', JSON.stringify(settings));        showMessage('Settings saved successfully', 'success');    } catch (error) {        console.error('Error saving settings:', error);        showMessage('Failed to save settings', 'error');    }}async function loadProfiles() {    try {        const stored = localStorage.getItem('numerology_profiles');        profiles = stored ? JSON.parse(stored) : [];        renderProfiles();        updateProfileSelect();    } catch (error) {        console.error('Error loading profiles:', error);    }}async function saveProfilesToStorage() {    try {        localStorage.setItem('numerology_profiles', JSON.stringify(profiles));    } catch (error) {        console.error('Error saving profiles:', error);    }}async function loadHistory() {    try {        const stored = localStorage.getItem('numerology_history');        history = stored ? JSON.parse(stored) : [];        renderHistory();    } catch (error) {        console.error('Error loading history:', error);    }}async function saveHistoryToStorage() {    try {        localStorage.setItem('numerology_history', JSON.stringify(history));    } catch (error) {        console.error('Error saving history:', error);    }}// ==================== TAB NAVIGATION ====================function switchTab(tabName) {    currentTab = tabName;        document.querySelectorAll('.tab').forEach(tab => {        tab.classList.toggle('active', tab.dataset.tab === tabName);    });    document.querySelectorAll('.tab-content').forEach(content => {        content.classList.toggle('active', content.id === `${tabName}Tab`);    });    if (tabName === 'profiles') renderProfiles();    if (tabName === 'designer') renderTemplates();    if (tabName === 'history') renderHistory();    if (tabName === 'analytics') updateAnalytics();}// ==================== THEME MANAGEMENT ====================function toggleTheme() {    settings.darkMode = !settings.darkMode;    applyTheme();    saveSettings();}function applyTheme() {    if (settings.darkMode) {        document.body.classList.add('dark-mode');        document.getElementById('themeToggleBtn').innerHTML = '<i class="fas fa-sun"></i>';    } else {        document.body.classList.remove('dark-mode');        document.getElementById('themeToggleBtn').innerHTML = '<i class="fas fa-moon"></i>';    }}// ==================== SETTINGS MODAL ====================function openSettings() {    document.getElementById('apiKeyInput').value = settings.apiKey || '';    document.getElementById('practitionerName').value = settings.practitionerName || '';    document.getElementById('practitionerEmail').value = settings.practitionerEmail || '';    document.getElementById('practitionerWebsite').value = settings.practitionerWebsite || '';    document.getElementById('languageSelect').value = settings.language || 'en';    document.getElementById('autoSaveReports').checked = settings.autoSaveReports;    document.getElementById('showNotifications').checked = settings.showNotifications;        document.getElementById('settingsModal').classList.add('active');}function closeSettings() {    document.getElementById('settingsModal').classList.remove('active');}async function saveApiKey() {    const apiKey = document.getElementById('apiKeyInput').value.trim();        if (!apiKey) {        showMessage('Please enter an API key', 'error');        return;    }    settings.apiKey = apiKey;    await saveSettings();    checkApiKey();}async function savePersonalInfo() {    settings.practitionerName = document.getElementById('practitionerName').value.trim();    settings.practitionerEmail = document.getElementById('practitionerEmail').value.trim();    settings.practitionerWebsite = document.getElementById('practitionerWebsite').value.trim();    await saveSettings();}async function savePreferences() {    const newLanguage = document.getElementById('languageSelect').value;    const languageChanged = newLanguage !== settings.language;        settings.language = newLanguage;    settings.autoSaveReports = document.getElementById('autoSaveReports').checked;    settings.showNotifications = document.getElementById('showNotifications').checked;    await saveSettings();        if (languageChanged) {        i18n.setLanguage(newLanguage);    }}function checkApiKey() {    if (!settings.apiKey) {        showMessage('Please configure your API key to start generating reports', 'info');    }}// ==================== CLIENT MODE TOGGLE ====================function toggleClientMode() {    const mode = document.querySelector('input[name="clientMode"]:checked').value;        if (mode === 'existing') {        document.getElementById('existingProfileMode').style.display = 'block';        document.getElementById('quickEntryMode').style.display = 'none';    } else {        document.getElementById('existingProfileMode').style.display = 'none';        document.getElementById('quickEntryMode').style.display = 'block';    }}// ==================== PROFILE MANAGEMENT ====================function openProfileModal(profileId = null) {    const modal = document.getElementById('profileModal');    const form = document.getElementById('profileForm');    form.reset();        if (profileId) {        const profile = profiles.find(p => p.id === profileId);        if (profile) {            const titleEl = document.getElementById('profileModalTitle'); titleEl.textContent = ''; const icon = document.createElement('i'); icon.className = 'fas fa-user-edit'; titleEl.appendChild(icon); titleEl.appendChild(document.createTextNode(' ' + i18n.t('edit_client_profile')));            document.getElementById('profileId').value = profile.id;            document.getElementById('profileFirstName').value = profile.firstName || '';            document.getElementById('profileMiddleName').value = profile.middleName || '';            document.getElementById('profileLastName').value = profile.lastName || '';            document.getElementById('profileShortName').value = profile.shortName || '';            document.getElementById('profileDob').value = profile.dob;            document.getElementById('profileBirthPlace').value = profile.birthPlace || '';            document.getElementById('profileCity').value = profile.city || '';            document.getElementById('profileCountry').value = profile.country || '';            document.getElementById('profileTimezone').value = profile.timezone || '';            document.getElementById('profileEmail').value = profile.email || '';            document.getElementById('profilePhone').value = profile.phone || '';            document.getElementById('profileNotes').value = profile.notes || '';        }    } else {        const titleEl = document.getElementById('profileModalTitle'); titleEl.textContent = ''; const icon = document.createElement('i'); icon.className = 'fas fa-user-plus'; titleEl.appendChild(icon); titleEl.appendChild(document.createTextNode(' ' + i18n.t('add_client_profile')));        document.getElementById('profileId').value = '';    }        modal.classList.add('active');}function closeProfileModal() {    document.getElementById('profileModal').classList.remove('active');}async function saveProfile(e) {    e.preventDefault();        const profileId = document.getElementById('profileId').value;    const firstName = document.getElementById('profileFirstName').value.trim();    const lastName = document.getElementById('profileLastName').value.trim();        if (!firstName || !lastName) {        showMessage('First name and last name are required', 'error');        return;    }        const profileData = {        firstName,        middleName: document.getElementById('profileMiddleName').value.trim(),        lastName,        shortName: document.getElementById('profileShortName').value.trim(),        dob: document.getElementById('profileDob').value,        birthPlace: document.getElementById('profileBirthPlace').value.trim(),        city: document.getElementById('profileCity').value.trim(),        country: document.getElementById('profileCountry').value.trim(),        timezone: document.getElementById('profileTimezone').value,        email: document.getElementById('profileEmail').value.trim(),        phone: document.getElementById('profilePhone').value.trim(),        notes: document.getElementById('profileNotes').value.trim(),        // Computed full name for display        name: `${firstName} ${document.getElementById('profileMiddleName').value.trim() ? document.getElementById('profileMiddleName').value.trim() + ' ' : ''}${lastName}`    };    if (profileId) {        // Edit existing        const index = profiles.findIndex(p => p.id === profileId);        if (index !== -1) {            profiles[index] = { ...profiles[index], ...profileData };            showMessage('Profile updated successfully', 'success');        }    } else {        // Add new        const newProfile = {            id: Date.now().toString(),            ...profileData,            createdAt: new Date().toISOString(),            reportsGenerated: 0        };        profiles.push(newProfile);        showMessage('Profile created successfully', 'success');    }    await saveProfilesToStorage();    renderProfiles();    updateProfileSelect();    closeProfileModal();}async function deleteProfile(profileId) {    if (!confirm('Are you sure you want to delete this profile?')) return;    profiles = profiles.filter(p => p.id !== profileId);    await saveProfilesToStorage();    renderProfiles();    updateProfileSelect();    showMessage('Profile deleted', 'success');}function renderProfiles() {    const container = document.getElementById('profilesList');        if (profiles.length === 0) {        container.textContent = '';        const emptyDiv = document.createElement('div');        emptyDiv.className = 'empty-state';        emptyDiv.textContent = ''; const icon = document.createElement('i'); icon.className = 'fas fa-user-friends'; emptyDiv.appendChild(icon); const p = document.createElement('p'); p.textContent = i18n.t('no_profiles'); emptyDiv.appendChild(p); const small = document.createElement('small'); small.textContent = i18n.t('no_profiles_sub'); emptyDiv.appendChild(small);        container.appendChild(emptyDiv);        return;    }    container.textContent = '';    profiles.forEach(profile => {        const card = document.createElement('div');        card.className = 'profile-card';                const header = document.createElement('div');        header.className = 'profile-card-header';                const nameDiv = document.createElement('div');        nameDiv.className = 'profile-name';        nameDiv.textContent = profile.name;                const actionsDiv = document.createElement('div');        actionsDiv.className = 'profile-actions';                const editBtn = document.createElement('button');        editBtn.className = 'icon-btn';        editBtn.title = 'Edit';        editBtn.onclick = () => openProfileModal(profile.id);        editBtn.innerHTML = '<i class="fas fa-edit"></i>';                const deleteBtn = document.createElement('button');        deleteBtn.className = 'icon-btn';        deleteBtn.title = 'Delete';        deleteBtn.onclick = () => deleteProfile(profile.id);        deleteBtn.innerHTML = '<i class="fas fa-trash"></i>';                actionsDiv.appendChild(editBtn);        actionsDiv.appendChild(deleteBtn);                header.appendChild(nameDiv);        header.appendChild(actionsDiv);                const details = document.createElement('div');        details.className = 'profile-details';                const dobDiv = document.createElement('div');        dobDiv.innerHTML = '<i class="fas fa-birthday-cake"></i>';        dobDiv.appendChild(document.createTextNode(' ' + formatDate(profile.dob)));        details.appendChild(dobDiv);                if (profile.email) {            const emailDiv = document.createElement('div');            emailDiv.innerHTML = '<i class="fas fa-envelope"></i>';            emailDiv.appendChild(document.createTextNode(' ' + profile.email));            details.appendChild(emailDiv);        }                if (profile.phone) {            const phoneDiv = document.createElement('div');            phoneDiv.innerHTML = '<i class="fas fa-phone"></i>';            phoneDiv.appendChild(document.createTextNode(' ' + profile.phone));            details.appendChild(phoneDiv);        }                const reportsDiv = document.createElement('div');        reportsDiv.innerHTML = '<i class="fas fa-file-pdf"></i>';        reportsDiv.appendChild(document.createTextNode(' ' + (profile.reportsGenerated || 0) + ' ' + i18n.t('reports_generated')));        details.appendChild(reportsDiv);                card.appendChild(header);        card.appendChild(details);        container.appendChild(card);    });}function updateProfileSelect() {    const select = document.getElementById('profileSelect');    select.textContent = '';        if (profiles.length === 0) {        const option = document.createElement('option');        option.value = '';        option.textContent = i18n.t('select_profile_placeholder');        select.appendChild(option);        return;    }    const defaultOption = document.createElement('option');    defaultOption.value = '';    defaultOption.textContent = i18n.t('select_profile_choose');    select.appendChild(defaultOption);        profiles.forEach(p => {        const option = document.createElement('option');        option.value = p.id;        option.textContent = `${p.name} (${formatDate(p.dob)})`;        select.appendChild(option);    });}function filterProfiles() {    const searchTerm = document.getElementById('profileSearch').value.toLowerCase();    const cards = document.querySelectorAll('.profile-card');        cards.forEach(card => {        const text = card.textContent.toLowerCase();        card.style.display = text.includes(searchTerm) ? 'block' : 'none';    });}// ==================== REPORT GENERATION ====================// Report parameter configurationconst REPORT_PARAMS = {    'personal-cycle': [        {            id: 'targetYear',            label: 'Target Year',            type: 'number',            required: true,            min: 1900,            max: 2100,            defaultValue: new Date().getFullYear() + 1,            icon: 'fa-calendar-alt',            i18nKey: 'target_year'        }    ],    'life-path': [],    'compatibility': [        {            id: 'person2FirstName',            label: 'Partner First Name',            type: 'text',            required: true,            icon: 'fa-user',            i18nKey: 'partner_first_name'        },        {            id: 'person2MiddleName',            label: 'Partner Middle Name',            type: 'text',            required: false,            icon: 'fa-user',            i18nKey: 'partner_middle_name'        },        {            id: 'person2LastName',            label: 'Partner Last Name',            type: 'text',            required: true,            icon: 'fa-user',            i18nKey: 'partner_last_name'        },        {            id: 'person2Dob',            label: 'Partner Date of Birth',            type: 'date',            required: true,            icon: 'fa-calendar',            i18nKey: 'partner_dob'        }    ],    'business': [        {            id: 'businessName',            label: 'Business Name',            type: 'text',            required: true,            icon: 'fa-building',            i18nKey: 'business_name'        },        {            id: 'businessPhone',            label: 'Business Phone',            type: 'tel',            required: false,            icon: 'fa-phone',            i18nKey: 'business_phone'        },        {            id: 'businessEmail',            label: 'Business Email',            type: 'email',            required: false,            icon: 'fa-envelope',            i18nKey: 'business_email'        }    ]};function renderDynamicReportParams() {    const reportType = document.getElementById('reportType').value;    const container = document.getElementById('dynamicReportParams');        container.textContent = '';        const params = REPORT_PARAMS[reportType] || [];        params.forEach(param => {        const inputGroup = document.createElement('div');        inputGroup.className = 'input-group';                const label = document.createElement('label');        label.setAttribute('for', param.id);        if (param.i18nKey) {            label.setAttribute('data-i18n', param.i18nKey);        }                const icon = document.createElement('i');        icon.className = `fas ${param.icon}`;        label.appendChild(icon);        label.appendChild(document.createTextNode(' ' + (i18n.t(param.i18nKey) || param.label)));                const input = document.createElement('input');        input.type = param.type;        input.id = param.id;        if (param.required) input.required = true;        if (param.min !== undefined) input.min = param.min;        if (param.max !== undefined) input.max = param.max;        if (param.defaultValue !== undefined) input.value = param.defaultValue;        if (param.placeholder) input.placeholder = param.placeholder;                inputGroup.appendChild(label);        inputGroup.appendChild(input);        container.appendChild(inputGroup);    });}async function generateReport() {    if (!settings.apiKey) {        showMessage('Please configure your API key first', 'error');        openSettings();        return;    }    const reportType = document.getElementById('reportType').value;    const clientMode = document.querySelector('input[name="clientMode"]:checked').value;        let clientData;        if (clientMode === 'existing') {        const profileId = document.getElementById('profileSelect').value;        if (!profileId) {            showMessage('Please select a client profile', 'error');            return;        }        const profile = profiles.find(p => p.id === profileId);        if (!profile) {            showMessage('Profile not found', 'error');            return;        }        clientData = {            id: profile.id,            firstName: profile.firstName,            middleName: profile.middleName || null,            lastName: profile.lastName,            name: profile.name, // already correctly computed when saving            dob: profile.dob,            birthPlace: profile.birthPlace,            email: profile.email,            phone: profile.phone        };    } else {        const firstName = document.getElementById('quickFirstName').value.trim();        const middleName = document.getElementById('quickMiddleName').value.trim(); // optional        const lastName = document.getElementById('quickLastName').value.trim();        const dob = document.getElementById('quickDob').value;                if (!firstName || !lastName || !dob) {            showMessage('Please enter client first name, last name and date of birth', 'error');            return;        }                // Build full name gracefully including middle name if provided        let fullName = firstName;        if (middleName) {            fullName += ' ' + middleName;        }        fullName += ' ' + lastName;                clientData = {            id: null,            firstName: firstName,            middleName: middleName || null,  // store null if not provided            lastName: lastName,            name: fullName,            dob: dob,            birthPlace: document.getElementById('quickBirthPlace').value.trim(),            email: document.getElementById('quickEmail').value.trim()        };    }    const targetYear = document.getElementById('targetYear') ? parseInt(document.getElementById('targetYear').value) : null;    const customization = {        title: document.getElementById('reportTitle').value.trim()    };    try {        showLoading(true, 'Connecting to Numerology API...');                if (reportType === 'personal-cycle') {            if (!targetYear) {                showMessage('Please enter target year', 'error');                return;            }            await generatePersonalCycleReport(clientData, targetYear, customization);        } else if (reportType === 'life-path') {            await generateLifePathReport(clientData, customization);        } else if (reportType === 'compatibility') {            const person2FirstName = document.getElementById('person2FirstName')?.value.trim();            const person2MiddleName = document.getElementById('person2MiddleName')?.value.trim(); // optional            const person2LastName = document.getElementById('person2LastName')?.value.trim();            const person2Dob = document.getElementById('person2Dob')?.value;                        if (!person2FirstName || !person2LastName || !person2Dob) {                showMessage('Please enter partner information', 'error');                return;            }                        // Build full name gracefully including middle name if provided            let person2FullName = person2FirstName;            if (person2MiddleName) {                person2FullName += ' ' + person2MiddleName;            }            person2FullName += ' ' + person2LastName;                        const person2Data = {                firstName: person2FirstName,                middleName: person2MiddleName || null, // store null if not provided                lastName: person2LastName,                name: person2FullName,                dob: person2Dob            };                        await generateCompatibilityReport(clientData, person2Data, customization);        } else if (reportType === 'business') {            const businessName = document.getElementById('businessName')?.value.trim();            if (!businessName) {                showMessage('Please enter business name', 'error');                return;            }            const businessData = {                businessName: businessName,                phoneNumber: document.getElementById('businessPhone')?.value.trim(),                email: document.getElementById('businessEmail')?.value.trim()            };            await generateBusinessReport(businessData, customization);        }            } catch (error) {        console.error('Report generation error:', error);        showMessage('Failed to generate report: ' + error.message, 'error');    } finally {        showLoading(false);    }}async function generatePersonalCycleReport(clientData, targetYear, customization) {    // Update progress    updateProgress(20, 'Fetching personal cycle data...');        // Fetch data from API    const apiData = await fetchPersonalCycleData(clientData.dob, targetYear);        updateProgress(50, 'Processing numerology calculations...');        // Get selected template    const templateId = document.getElementById('templateSelect').value;    const template = templateId ? getTemplateById(templateId) : null;        // Generate PDF    const pdfData = await createPersonalCyclePDF(apiData, clientData, targetYear, customization, template);        updateProgress(90, 'Finalizing report...');        // Save to history    if (settings.autoSaveReports) {        await saveToHistory({            type: 'personal-cycle',            clientName: clientData.name,            clientDob: clientData.dob,            targetYear,            generatedAt: new Date().toISOString(),            profileId: clientData.id        });                // Update profile report count        if (clientData.id) {            const profile = profiles.find(p => p.id === clientData.id);            if (profile) {                profile.reportsGenerated = (profile.reportsGenerated || 0) + 1;                await saveProfilesToStorage();            }        }    }        updateProgress(100, 'Complete!');        // Download PDF    downloadPDF(pdfData, `Numerology_Report_${clientData.name}_${timestamp}.pdf`);        showMessage('Report generated successfully!', 'success');        if (settings.showNotifications) {        showNotification('Report Ready', `Personal Cycle Report for ${clientData.name} has been generated.`);    }}async function generateLifePathReport(clientData, customization) {    updateProgress(20, 'Fetching life path data...');        console.log("createLifePathPDF:", typeof createLifePathPDF);        console.log("⏳ loading life-path-report.js");    console.log("✅ life-path-report.js fully loaded");        const apiData = await fetchLifePathData(clientData);        updateProgress(50, 'Processing life path calculations...');        const templateId = document.getElementById('templateSelect').value;    const template = templateId ? getTemplateById(templateId) : null;        const pdfData = await createLifePathPDF(apiData, clientData, customization, template);            updateProgress(90, 'Finalizing report...');        if (settings.autoSaveReports) {        await saveToHistory({            type: 'life-path',            clientName: clientData.name,            clientDob: clientData.dob,            generatedAt: new Date().toISOString(),            profileId: clientData.id        });                if (clientData.id) {            const profile = profiles.find(p => p.id === clientData.id);            if (profile) {                profile.reportsGenerated = (profile.reportsGenerated || 0) + 1;                await saveProfilesToStorage();            }        }    }        updateProgress(100, 'Complete!');        downloadPDF(pdfData, `Life_Path_Report_${clientData.firstName}_${timestamp}.pdf`);        showMessage('Report generated successfully!', 'success');        if (settings.showNotifications) {        showNotification('Report Ready', `Life Path Report for ${clientData.name} has been generated.`);    }}async function fetchLifePathData(clientData) {    const dob = clientData.dob;    // Build fullName including middleName if available    let fullName = clientData.name || '';    if (!fullName) {        fullName = clientData.firstName || '';        if (clientData.middleName) {            fullName += ' ' + clientData.middleName;        }        fullName += ' ' + (clientData.lastName || '');        fullName = fullName.trim();    }    // Parse DOB    const [year, month, day] = dob.split('-');    const currentYear = new Date().getFullYear();    // Fetch all required endpoints    const endpoints = [        { key: 'life_path', url: `/life_path?birth_year=${year}&birth_month=${month}&birth_day=${day}` },        { key: 'life-essence', url: `/life-essence?full_name=${encodeURIComponent(fullName)}&dob=${dob}` },        { key: 'pinnacle-cycles', url: `/pinnacle-cycles?dob=${dob}` },        { key: 'period_cycles', url: `/period_cycles?birth_year=${year}&birth_month=${month}&birth_day=${day}` },        { key: 'personal_year', url: `/personal_year?birth_month=${month}&birth_day=${day}&prediction_year=${currentYear}` },        { key: 'personal-month', url: `/personal-month?dob=${dob}` },        { key: 'personal-day', url: `/personal-day?dob=${dob}` },        { key: 'challenge_number', url: `/challenge_number?birth_year=${year}&birth_month=${month}&birth_day=${day}` }    ];    const results = {};    for (const { key, url } of endpoints) {        const fullUrl = `${API_BASE}${url}`;        const response = await fetch(fullUrl, {            method: 'GET',            headers: {                'X-RapidAPI-Key': settings.apiKey,                'X-RapidAPI-Host': API_HOST,                'Content-Type': 'application/json'            }        });        if (!response.ok) {            const errorText = await response.text();            console.error(`API error for ${key}:`, errorText);            // Continue with other endpoints even if one fails            results[key] = {};            continue;        }        results[key] = await response.json();    }    return results;}async function fetchPersonalCycleData(dob, targetYear) {    const url = `${API_BASE}/personal-cycle-report?dob=${dob}&target_year=${targetYear}`;        console.log('API Request URL:', url);    console.log('API Key (first 10 chars):', settings.apiKey.substring(0, 10) + '...');        const response = await fetch(url, {        method: 'GET',        headers: {            'X-RapidAPI-Key': settings.apiKey,            'X-RapidAPI-Host': API_HOST,            'Content-Type': 'application/json'        }    });    console.log('Response status:', response.status);    console.log('Response headers:', response.headers);        if (!response.ok) {        const errorText = await response.text();        console.error('API Error Response:', errorText);        throw new Error(`API request failed: ${response.status} - ${errorText}`);    }    return await response.json();}// ==================== PDF GENERATION ====================function downloadPDF(doc, filename) {    doc.save(filename);}// ==================== HISTORY MANAGEMENT ====================async function saveToHistory(entry) {    history.unshift(entry);    if (history.length > 100) history.splice(100);    await saveHistoryToStorage();    renderHistory();}function renderHistory() {    const container = document.getElementById('historyList');        if (history.length === 0) {        container.textContent = '';        const emptyDiv = document.createElement('div');        emptyDiv.className = 'empty-state';        emptyDiv.textContent = ''; const icon = document.createElement('i'); icon.className = 'fas fa-inbox'; emptyDiv.appendChild(icon); const p = document.createElement('p'); p.textContent = i18n.t('no_history'); emptyDiv.appendChild(p);        container.appendChild(emptyDiv);        return;    }    container.textContent = '';    history.slice(0, 50).forEach(entry => {        const item = document.createElement('div');        item.className = 'history-item';                const header = document.createElement('div');        header.className = 'history-header';                const titleDiv = document.createElement('div');        titleDiv.className = 'history-title';        titleDiv.textContent = entry.clientName;                const dateDiv = document.createElement('div');        dateDiv.className = 'history-date';        dateDiv.textContent = formatDateTime(entry.generatedAt);                header.appendChild(titleDiv);        header.appendChild(dateDiv);                const meta = document.createElement('div');        meta.className = 'history-meta';                const badge = document.createElement('span');        badge.className = 'badge info';        badge.textContent = entry.type;                const yearSpan = document.createElement('span');        yearSpan.innerHTML = '<i class="fas fa-calendar-alt"></i>';        yearSpan.appendChild(document.createTextNode(' Year ' + entry.targetYear));                const dobSpan = document.createElement('span');        dobSpan.innerHTML = '<i class="fas fa-birthday-cake"></i>';        dobSpan.appendChild(document.createTextNode(' ' + formatDate(entry.clientDob)));                meta.appendChild(badge);        meta.appendChild(yearSpan);        meta.appendChild(dobSpan);                item.appendChild(header);        item.appendChild(meta);        container.appendChild(item);    });}async function exportHistory() {    if (history.length === 0) {        showMessage('No history to export', 'error');        return;    }    const data = JSON.stringify(history, null, 2);    const blob = new Blob([data], { type: 'application/json' });    const url = URL.createObjectURL(blob);    const a = document.createElement('a');    a.href = url;    a.download = `numerology-history-${Date.now()}.json`;    a.click();    URL.revokeObjectURL(url);        showMessage('History exported successfully', 'success');}async function clearHistory() {    if (!confirm('Are you sure you want to clear all report history?')) return;    history = [];    await saveHistoryToStorage();    renderHistory();    updateAnalytics();    showMessage('History cleared', 'success');}// ==================== ANALYTICS ====================function updateAnalytics() {    // Total Reports    document.getElementById('totalReports').textContent = history.length;        // Total Profiles    document.getElementById('totalProfiles').textContent = profiles.length;        // This Month Reports    const now = new Date();    const thisMonth = history.filter(h => {        const date = new Date(h.generatedAt);        return date.getMonth() === now.getMonth() &&                date.getFullYear() === now.getFullYear();    }).length;    document.getElementById('thisMonthReports').textContent = thisMonth;        // Most Used Report Type    const typeCounts = {};    history.forEach(h => {        typeCounts[h.type] = (typeCounts[h.type] || 0) + 1;    });    const mostUsed = Object.keys(typeCounts).length > 0 ?         Object.keys(typeCounts).reduce((a, b) => typeCounts[a] > typeCounts[b] ? a : b) :        'N/A';    document.getElementById('mostUsedReport').textContent =         mostUsed === 'personal-cycle' ? 'Personal Cycle' : mostUsed;        // Update chart if available    updateChart();}function updateChart() {    const canvas = document.getElementById('reportsChart');    if (!canvas) return;        const ctx = canvas.getContext('2d');        // Get last 30 days data    const last30Days = Array.from({ length: 30 }, (_, i) => {        const date = new Date();        date.setDate(date.getDate() - (29 - i));        return date.toISOString().split('T')[0];    });        const counts = last30Days.map(date => {        return history.filter(h => h.generatedAt.startsWith(date)).length;    });        // Clear previous chart    if (window.myChart) {        window.myChart.destroy();    }        window.myChart = new Chart(ctx, {        type: 'line',        data: {            labels: last30Days.map(d => new Date(d).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })),            datasets: [{                label: 'Reports Generated',                data: counts,                borderColor: 'rgb(107, 70, 193)',                backgroundColor: 'rgba(107, 70, 193, 0.1)',                tension: 0.4,                fill: true            }]        },        options: {            responsive: true,            maintainAspectRatio: true,            plugins: {                legend: {                    display: false                }            },            scales: {                y: {                    beginAtZero: true,                    ticks: {                        stepSize: 1                    }                }            }        }    });}// ==================== UI HELPERS ====================function showLoading(show, text = 'Processing...') {    const container = document.getElementById('loadingContainer');    const loadingText = document.getElementById('loadingText');    const btn = document.getElementById('generateReportBtn');        container.style.display = show ? 'block' : 'none';    btn.disabled = show;        if (show) {        loadingText.textContent = text;        updateProgress(10, text);    } else {        updateProgress(0, '');    }}function updateProgress(percent, text) {    const progressFill = document.getElementById('progressFill');    const loadingText = document.getElementById('loadingText');        if (progressFill) progressFill.style.width = `${percent}%`;    if (loadingText && text) loadingText.textContent = text;}function showMessage(text, type = 'info') {    const container = document.getElementById('messageContainer');    const message = document.createElement('div');    message.className = `message ${type}`;        const icon = type === 'success' ? 'fa-check-circle' :                 type === 'error' ? 'fa-exclamation-circle' :                 type === 'warning' ? 'fa-exclamation-triangle' :                 'fa-info-circle';        const iconEl = document.createElement('i');    iconEl.className = `fas ${icon}`;        const textEl = document.createElement('span');    textEl.textContent = text;        message.appendChild(iconEl);    message.appendChild(textEl);    container.appendChild(message);        setTimeout(() => {        message.remove();    }, 5000);}function showNotification(title, message) {    if (typeof browser !== 'undefined' && browser.notifications) {        browser.notifications.create({            type: 'basic',            iconUrl: 'icons/icon48.png',            title: title,            message: message        });    }}function toggleCollapsible(header) {    header.classList.toggle('active');    const content = header.nextElementSibling;    content.classList.toggle('active');}// ==================== UTILITY FUNCTIONS ====================function escapeHtml(text) {    const div = document.createElement('div');    div.textContent = text;    return div.innerHTML;}function formatDate(dateStr) {    if (!dateStr) return 'N/A';    const date = new Date(dateStr);    return date.toLocaleDateString('en-US', {         year: 'numeric',         month: 'long',         day: 'numeric'     });}function formatDateTime(dateStr) {    if (!dateStr) return 'N/A';    const date = new Date(dateStr);    return date.toLocaleDateString('en-US', {         year: 'numeric',         month: 'short',         day: 'numeric',        hour: '2-digit',        minute: '2-digit'    });}function setCurrentYear() {    const yearEl = document.getElementById('currentYear');    if (yearEl) {        yearEl.textContent = new Date().getFullYear();    }}// Make functions globally accessible for onclick handlerswindow.openProfileModal = openProfileModal;window.renderDynamicReportParams = renderDynamicReportParams;window.deleteProfile = deleteProfile;// ==================== TEMPLATE MANAGEMENT ====================function renderTemplates() {    const container = document.getElementById('templatesList');        if (!templates || templates.length === 0) {        container.textContent = '';        const emptyDiv = document.createElement('div');        emptyDiv.className = 'empty-state';        emptyDiv.textContent = ''; const icon = document.createElement('i'); icon.className = 'fas fa-paint-brush'; emptyDiv.appendChild(icon); const p = document.createElement('p'); p.textContent = i18n.t('no_templates'); emptyDiv.appendChild(p);        container.appendChild(emptyDiv);        return;    }    container.textContent = '';    templates.forEach(template => {        const card = document.createElement('div');        card.className = 'profile-card';                const header = document.createElement('div');        header.className = 'profile-card-header';                const nameDiv = document.createElement('div');        nameDiv.className = 'profile-name';        nameDiv.textContent = template.name + (template.isDefault ? ' (' + i18n.t('default_template') + ')' : '');                const actionsDiv = document.createElement('div');        actionsDiv.className = 'profile-actions';                const editBtn = document.createElement('button');        editBtn.className = 'icon-btn';        editBtn.title = 'Edit';        editBtn.onclick = () => openTemplateModal(template.id);        editBtn.innerHTML = '<i class="fas fa-edit"></i>';        actionsDiv.appendChild(editBtn);                if (!template.isDefault) {            const deleteBtn = document.createElement('button');            deleteBtn.className = 'icon-btn';            deleteBtn.title = 'Delete';            deleteBtn.onclick = () => deleteTemplateConfirm(template.id);            deleteBtn.innerHTML = '<i class="fas fa-trash"></i>';            actionsDiv.appendChild(deleteBtn);        }                header.appendChild(nameDiv);        header.appendChild(actionsDiv);                const details = document.createElement('div');        details.className = 'profile-details';                const typeDiv = document.createElement('div');        typeDiv.innerHTML = '<i class="fas fa-scroll"></i>';        typeDiv.appendChild(document.createTextNode(' ' + template.reportType));        details.appendChild(typeDiv);                const fontDiv = document.createElement('div');        fontDiv.innerHTML = '<i class="fas fa-font"></i>';        fontDiv.appendChild(document.createTextNode(' ' + template.fontFamily));        details.appendChild(fontDiv);                const colorDiv = document.createElement('div');        colorDiv.innerHTML = '<i class="fas fa-palette"></i>';        colorDiv.appendChild(document.createTextNode(' ' + template.colors.primary));        details.appendChild(colorDiv);                card.appendChild(header);        card.appendChild(details);        container.appendChild(card);    });}function updateTemplateSelect() {    const reportType = document.getElementById('reportType').value;    const select = document.getElementById('templateSelect');    select.textContent = '';        const reportTemplates = getTemplatesByReportType(reportType);        if (reportTemplates.length === 0) {        const option = document.createElement('option');        option.value = '';        option.textContent = i18n.t('select_template_placeholder');        select.appendChild(option);        return;    }    const defaultOption = document.createElement('option');    defaultOption.value = '';    defaultOption.textContent = i18n.t('select_template_placeholder');    select.appendChild(defaultOption);        reportTemplates.forEach(t => {        const option = document.createElement('option');        option.value = t.id;        option.textContent = t.name + (t.isDefault ? ' (' + i18n.t('default_template') + ')' : '');        if (t.isDefault) option.selected = true;        select.appendChild(option);    });}function openTemplateModal(templateId = null) {    const modal = document.getElementById('templateModal');    const form = document.getElementById('templateForm');    form.reset();        if (templateId) {        const template = getTemplateById(templateId);        if (template) {            const titleEl = document.getElementById('templateModalTitle'); titleEl.textContent = ''; const icon = document.createElement('i'); icon.className = 'fas fa-palette'; titleEl.appendChild(icon); titleEl.appendChild(document.createTextNode(' ' + i18n.t('edit_template')));            document.getElementById('templateId').value = template.id;            document.getElementById('templateName').value = template.name;            document.getElementById('templateReportType').value = template.reportType;            document.getElementById('templateFontFamily').value = template.fontFamily;            document.getElementById('templateBodyFontFamily').value = template.bodyFontFamily || template.fontFamily;            document.getElementById('templatePrimaryColor').value = template.colors.primary;            document.getElementById('templateSecondaryColor').value = template.colors.secondary;            document.getElementById('templateAccentColor').value = template.colors.accent;            document.getElementById('templateBackgroundColor').value = template.colors.background || '#FFFFFF';            document.getElementById('templateTitleSize').value = template.fontSize.title;            document.getElementById('templateBodySize').value = template.fontSize.body;        }    } else {        const titleEl = document.getElementById('templateModalTitle'); titleEl.textContent = ''; const icon = document.createElement('i'); icon.className = 'fas fa-palette'; titleEl.appendChild(icon); titleEl.appendChild(document.createTextNode(' ' + i18n.t('create_template')));        document.getElementById('templateId').value = '';    }        modal.classList.add('active');}function closeTemplateModal() {    document.getElementById('templateModal').classList.remove('active');}async function saveTemplate(e) {    e.preventDefault();        const templateId = document.getElementById('templateId').value;    const templateData = {        name: document.getElementById('templateName').value.trim(),        reportType: document.getElementById('templateReportType').value,        fontFamily: document.getElementById('templateFontFamily').value,        bodyFontFamily: document.getElementById('templateBodyFontFamily').value,        colors: {            primary: document.getElementById('templatePrimaryColor').value,            secondary: document.getElementById('templateSecondaryColor').value,            accent: document.getElementById('templateAccentColor').value,            background: document.getElementById('templateBackgroundColor').value,        },        fontSize: {            title: parseInt(document.getElementById('templateTitleSize').value),            subtitle: 14,            sectionHeader: 18,            subsectionHeader: 13,            body: parseInt(document.getElementById('templateBodySize').value)        }    };    if (templateId) {        updateTemplate(templateId, templateData);        showMessage('Template updated successfully', 'success');    } else {        createTemplate(templateData);        showMessage('Template created successfully', 'success');    }    renderTemplates();    updateTemplateSelect();    closeTemplateModal();}async function deleteTemplateConfirm(templateId) {    if (!confirm('Are you sure you want to delete this template?')) return;    if (deleteTemplate(templateId)) {        renderTemplates();        updateTemplateSelect();        showMessage('Template deleted', 'success');    } else {        showMessage('Cannot delete default template', 'error');    }}window.openTemplateModal = openTemplateModal;window.deleteTemplateConfirm = deleteTemplateConfirm;async function generateCompatibilityReport(person1Data, person2Data, customization) {    updateProgress(20, 'Fetching compatibility data...');        const apiData = await fetchCompatibilityData(person1Data, person2Data);        updateProgress(50, 'Processing compatibility analysis...');        const templateId = document.getElementById('templateSelect').value;    const template = templateId ? getTemplateById(templateId) : null;        const clientData = {        person1Name: person1Data.name,        person2Name: person2Data.name    };        const pdfData = await createCompatibilityPDF(apiData, clientData, customization, template);        updateProgress(90, 'Finalizing report...');        if (settings.autoSaveReports) {        await saveToHistory({            type: 'compatibility',            clientName: `${person1Data.name} & ${person2Data.name}`,            clientDob: person1Data.dob,            generatedAt: new Date().toISOString(),            profileId: person1Data.id        });                if (person1Data.id) {            const profile = profiles.find(p => p.id === person1Data.id);            if (profile) {                profile.reportsGenerated = (profile.reportsGenerated || 0) + 1;                await saveProfilesToStorage();            }        }    }        updateProgress(100, 'Complete!');        downloadPDF(pdfData, `Compatibility_Report_${person1Data.name}_${person2Data.name}_${timestamp}.pdf`);        showMessage('Report generated successfully!', 'success');        if (settings.showNotifications) {        showNotification('Report Ready', `Compatibility Report for ${person1Data.name} & ${person2Data.name} has been generated.`);    }}async function fetchCompatibilityData(person1, person2) {    const [year1, month1, day1] = person1.dob.split('-');    const [year2, month2, day2] = person2.dob.split('-');    // Build full names including middle names if available    const person1FullName = person1.name || `${person1.firstName || ''}${person1.middleName ? ' ' + person1.middleName : ''} ${person1.lastName || ''}`.trim();    const person2FullName = person2.name || `${person2.firstName || ''}${person2.middleName ? ' ' + person2.middleName : ''} ${person2.lastName || ''}`.trim();    const endpoints = [        {            key: 'compatibility-score',            url: `/compatibility-score`,            method: 'POST',            body: {                first_name_1: person1.firstName || person1FullName.split(' ')[0],                middle_name_1: person1.middleName || '',                last_name_1: person1.lastName || person1FullName.split(' ').slice(-1).join(' '),                dob_1: person1.dob,                first_name_2: person2.firstName || person2FullName.split(' ')[0],                middle_name_2: person2.middleName || '',                last_name_2: person2.lastName || person2FullName.split(' ').slice(-1).join(' '),                dob_2: person2.dob            }        },        // add other endpoints if needed                // Existing 3        { key: 'horoscope/compatibility/love', url: `/horoscope/compatibility/love?dob=${person1.dob}&dob_partner=${person2.dob}` },        { key: 'horoscope/compatibility/career', url: `/horoscope/compatibility/career?dob=${person1.dob}&dob_partner=${person2.dob}` },        { key: 'horoscope/compatibility/friendship', url: `/horoscope/compatibility/friendship?dob=${person1.dob}&dob_partner=${person2.dob}` },        { key: 'horoscope/compatibility/lifestyle', url: `/horoscope/compatibility/lifestyle?dob=${person1.dob}&dob_partner=${person2.dob}` },        { key: 'horoscope/compatibility/communication', url: `/horoscope/compatibility/communication?dob=${person1.dob}&dob_partner=${person2.dob}` },        { key: 'horoscope/compatibility/growth', url: `/horoscope/compatibility/growth?dob=${person1.dob}&dob_partner=${person2.dob}` },        { key: 'horoscope/compatibility/financial', url: `/horoscope/compatibility/financial?dob=${person1.dob}&dob_partner=${person2.dob}` }    ];        const results = {};        for (const { key, url, method, body } of endpoints) {        const fullUrl = `${API_BASE}${url}`;                const options = {            method: method || 'GET',            headers: {                'X-RapidAPI-Key': settings.apiKey,                'X-RapidAPI-Host': API_HOST,                'Content-Type': 'application/json'            }        };                if (method === 'POST' && body) {            options.body = JSON.stringify(body);        }                const response = await fetch(fullUrl, options);                if (!response.ok) {            const errorText = await response.text();            console.error(`API error for ${key}:`, errorText);            results[key] = {};            continue;        }                results[key] = await response.json();    }        return results;}async function generateBusinessReport(clientData, customization) {    updateProgress(20, 'Fetching business data...');        const apiData = await fetchBusinessData(clientData);        updateProgress(50, 'Processing business analysis...');        const templateId = document.getElementById('templateSelect').value;    const template = templateId ? getTemplateById(templateId) : null;        const pdfData = await createBusinessPDF(apiData, clientData, customization, template);        updateProgress(90, 'Finalizing report...');        if (settings.autoSaveReports) {        await saveToHistory({            type: 'business',            clientName: clientData.businessName,            clientDob: null,            generatedAt: new Date().toISOString(),            profileId: null        });    }        updateProgress(100, 'Complete!');        downloadPDF(pdfData, `Business_Analysis_${clientData.businessName}_${timestamp}.pdf`);        showMessage('Report generated successfully!', 'success');        if (settings.showNotifications) {        showNotification('Report Ready', `Business Analysis for ${clientData.businessName} has been generated.`);    }}async function fetchBusinessData(clientData) {    const endpoints = [        { key: 'gematria', url: `/gematria?text=${encodeURIComponent(clientData.businessName)}` }    ];        if (clientData.phoneNumber) {        const cleanPhone = clientData.phoneNumber.replace(/\D/g, ""); // Remove non-digit characters        endpoints.push({ key: "analyze_phone", url: `/analyze_phone?phone_number=${cleanPhone}` });    }            if (clientData.email) {        endpoints.push({ key: 'email-numerology', url: `/email-numerology?email=${encodeURIComponent(clientData.email)}` });    }    // NEW: Add cornerstone and capstone if businessName is available    if (clientData.businessName) {        // Use the business name directly for cornerstone/capstone if available        const nameForAnalysis = clientData.businessName;        endpoints.push({ key: 'cornerstone-letter', url: `/cornerstone-letter?name=${encodeURIComponent(nameForAnalysis)}` });        endpoints.push({ key: 'capstone-letter', url: `/capstone-letter?name=${encodeURIComponent(nameForAnalysis)}` });    }        const results = {};        for (const { key, url } of endpoints) {        const fullUrl = `${API_BASE}${url}`;                const response = await fetch(fullUrl, {            method: 'GET',            headers: {                'X-RapidAPI-Key': settings.apiKey,                'X-RapidAPI-Host': API_HOST,                'Content-Type': 'application/json'            }        });                if (!response.ok) {            const errorText = await response.text();            console.error(`API error for ${key}:`, errorText);            results[key] = {};            continue;        }                results[key] = await response.json();    }        return results;}function getDateTimeInt() {  const now = new Date();  const YYYY = now.getFullYear();  const MM = String(now.getMonth() + 1).padStart(2, "0");  const DD = String(now.getDate()).padStart(2, "0");  const HH = String(now.getHours()).padStart(2, "0");  const mm = String(now.getMinutes()).padStart(2, "0");  return `${YYYY}${MM}${DD}${HH}${mm}`;}const timestamp = getDateTimeInt();

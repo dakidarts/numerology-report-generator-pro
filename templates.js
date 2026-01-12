@@ -42,6 +42,69 @@ function getDefaultTemplates() {
                 accent: '#4A5568',
                 background: '#FFFFFF'
             }
+        },
+        {
+            id: 'default-life-path',
+            name: 'Default Life Path',
+            reportType: 'life-path',
+            isDefault: true,
+            fontFamily: 'helvetica',
+            bodyFontFamily: 'helvetica',
+            fontSize: {
+                title: 24,
+                subtitle: 14,
+                sectionHeader: 18,
+                subsectionHeader: 13,
+                body: 12
+            },
+            colors: {
+                primary: '#6B46C1',
+                secondary: '#1A202C',
+                accent: '#4A5568',
+                background: '#FFFFFF'
+            }
+        },
+        {
+            id: 'default-compatibility',
+            name: 'Default Compatibility',
+            reportType: 'compatibility',
+            isDefault: true,
+            fontFamily: 'helvetica',
+            bodyFontFamily: 'helvetica',
+            fontSize: {
+                title: 24,
+                subtitle: 14,
+                sectionHeader: 18,
+                subsectionHeader: 13,
+                body: 12
+            },
+            colors: {
+                primary: '#6B46C1',
+                secondary: '#1A202C',
+                accent: '#4A5568',
+                background: '#FFFFFF'
+            }
+        },
+        {
+            id: 'default-business',
+            name: 'Default Business',
+            reportType: 'business',
+            isDefault: true,
+            fontFamily: 'helvetica',
+            bodyFontFamily: 'helvetica',
+            fontSize: {
+                title: 24,
+                subtitle: 14,
+                sectionHeader: 18,
+                subsectionHeader: 13,
+                body: 12
+            },
+            colors: {
+                primary: '#6B46C1',
+                secondary: '#1A202C',
+                accent: '#4A5568',
+                background: '#FFFFFF'
+            }
         }
     ];
 }

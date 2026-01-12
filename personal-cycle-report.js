@@ -1,6 +1,4 @@
-// Updated PDF generation function with custom footers and template support
-// Replace the createPersonalCyclePDF function in personal-cycle-report.js with this
-
+// Updated PDF generation function ensuring "Global Focus Areas" doesn't break awkwardly
 async function createPersonalCyclePDF(data, clientData, targetYear, customization, template = null) {
     // Retry mechanism for jsPDF loading
     let jsPDF = null;
@@ -82,15 +80,19 @@ async function createPersonalCyclePDF(data, clientData, targetYear, customizatio
     const contentWidth = pageWidth - (2 * margin);
     let currentPage = 1;
 
-    const checkNewPage = (neededHeight) => {
-        if (yPos + neededHeight > pageHeight - 40) {
+    // Helper function to check if we need a new page for upcoming content
+    const ensureSpace = (requiredHeight) => {
+        if (yPos + requiredHeight > pageHeight - 20) { // Leave 20pt for footer
             addPageFooter();
             doc.addPage();
             currentPage++;
             yPos = margin;
-            return true;
         }
-        return false;
+    };
+    
+    // Helper function to add a standard vertical space between elements
+    const addVerticalSpace = (space = 8) => {
+        yPos += space;
     };
     
     const addPageFooter = () => {
@@ -108,12 +110,12 @@ async function createPersonalCyclePDF(data, clientData, targetYear, customizatio
             if (settings.practitionerWebsite) {
                 doc.setFont(styles.fontFamily, 'normal');
                 const nameWidth = doc.getTextWidth(settings.practitionerName);
-                doc.text('•  ' + settings.practitionerWebsite.replace(/^https?:\/\//, ''), margin + nameWidth + 3, footerY);
+                doc.text('• ' + settings.practitionerWebsite.replace(/^https?:\/\//, ''), margin + nameWidth + 3, footerY);
             }
         }
         
         // Right side: Page number
-        const totalPages = 5; // Approximate, will be updated
+        const totalPages = 6; // Approximate
         const pageText = `Page ${currentPage} of ${totalPages}`;
         doc.text(pageText, pageWidth - margin, footerY, { align: 'right' });
     };
@@ -121,6 +123,7 @@ async function createPersonalCyclePDF(data, clientData, targetYear, customizatio
     // Set page background
     doc.setFillColor(...backgroundColor);
     doc.rect(0, 0, pageWidth, pageHeight, 'F');
+    
     // Header section
     doc.setFillColor(...primaryColor);
     doc.rect(0, 0, pageWidth, 80, 'F');
@@ -131,7 +134,7 @@ async function createPersonalCyclePDF(data, clientData, targetYear, customizatio
     const title = customization.title || 'Personal Cycle Analysis Report';
     doc.text(title, pageWidth / 2, 35, { align: 'center', maxWidth: contentWidth - 20 });
     
-    yPos = 60;
+    yPos = 50;
     doc.setFontSize(48);
     doc.text(targetYear.toString(), pageWidth / 2, yPos, { align: 'center' });
     
@@ -141,17 +144,15 @@ async function createPersonalCyclePDF(data, clientData, targetYear, customizatio
     const boxHeight = 70;
     doc.setFillColor(...lightPrimaryColor);
     doc.setDrawColor(...primaryColor);
-    doc.setFillColor(...lightPrimaryColor);
-    doc.setDrawColor(...primaryColor);
     doc.roundedRect(margin, yPos, contentWidth, boxHeight, 3, 3, 'FD');
     
     doc.setFont(styles.bodyFontFamily, 'normal');
-        doc.setTextColor(...secondaryColor);
+    doc.setTextColor(...secondaryColor);
     doc.setFontSize(styles.fontSize.body);
     doc.setFont(styles.fontFamily, 'bold');
     
     yPos += 12;
-    doc.text('Client Name:', margin + 10, yPos);
+    doc.text('Insights For:', margin + 10, yPos);
     doc.setFont(styles.bodyFontFamily, 'normal');
     doc.text(clientData.name, margin + 60, yPos);
     
@@ -176,7 +177,7 @@ async function createPersonalCyclePDF(data, clientData, targetYear, customizatio
     
     yPos += 10;
     doc.setFont(styles.bodyFontFamily, 'normal');
-        doc.setTextColor(...secondaryColor);
+    doc.setTextColor(...secondaryColor);
     doc.setFont(styles.fontFamily, 'bold');
     doc.text('Universal Year:', margin + 10, yPos);
     doc.setFont(styles.bodyFontFamily, 'normal');
@@ -185,7 +186,7 @@ async function createPersonalCyclePDF(data, clientData, targetYear, customizatio
     
     yPos += 10;
     doc.setFont(styles.bodyFontFamily, 'normal');
-        doc.setTextColor(...secondaryColor);
+    doc.setTextColor(...secondaryColor);
     doc.setFont(styles.fontFamily, 'bold');
     doc.text('Generated:', margin + 10, yPos);
     doc.setFont(styles.bodyFontFamily, 'normal');
@@ -211,19 +212,20 @@ async function createPersonalCyclePDF(data, clientData, targetYear, customizatio
     yPos += 12;
     
     doc.setFont(styles.bodyFontFamily, 'normal');
-        doc.setTextColor(...secondaryColor);
+    doc.setTextColor(...secondaryColor);
     doc.setFontSize(styles.fontSize.body);
-    doc.setFont(styles.bodyFontFamily, 'normal');
     const overviewLines = doc.splitTextToSize(data.cycle_synthesis.overview, contentWidth);
     doc.text(overviewLines, margin, yPos);
-    yPos += overviewLines.length * 6 + 10;
-    
-    checkNewPage(40);
+    yPos += overviewLines.length * 6 + 8; // Standard space after paragraph
     
     // Key Integration Box
+    const keyIntLines = doc.splitTextToSize(data.cycle_synthesis.key_integration, contentWidth - 10);
+    const keyIntBoxHeight = 20 + (keyIntLines.length * 5);
+    ensureSpace(keyIntBoxHeight + 10); // Ensure space for box and padding
+    
     doc.setFillColor(255, 249, 230);
     doc.setDrawColor(217, 119, 6);
-    doc.roundedRect(margin, yPos, contentWidth, 35, 3, 3, 'FD');
+    doc.roundedRect(margin, yPos, contentWidth, keyIntBoxHeight, 3, 3, 'FD');
     
     doc.setFontSize(styles.fontSize.subsectionHeader);
     doc.setFont(styles.fontFamily, 'bold');
@@ -232,16 +234,17 @@ async function createPersonalCyclePDF(data, clientData, targetYear, customizatio
     
     doc.setFontSize(styles.fontSize.body);
     doc.setFont(styles.bodyFontFamily, 'normal');
-    const keyIntLines = doc.splitTextToSize(data.cycle_synthesis.key_integration, contentWidth - 10);
     doc.text(keyIntLines, margin + 5, yPos + 16);
-    yPos += 40;
-    
-    checkNewPage(40);
+    yPos += keyIntBoxHeight + 8;
     
     // Alignment Guidance Box
+    const alignLines = doc.splitTextToSize(data.cycle_synthesis.alignment_guidance, contentWidth - 10);
+    const alignBoxHeight = 20 + (alignLines.length * 5);
+    ensureSpace(alignBoxHeight + 10); // Ensure space for box and padding
+    
     doc.setFillColor(232, 245, 233);
     doc.setDrawColor(56, 161, 105);
-    doc.roundedRect(margin, yPos, contentWidth, 35, 3, 3, 'FD');
+    doc.roundedRect(margin, yPos, contentWidth, alignBoxHeight, 3, 3, 'FD');
     
     doc.setFontSize(styles.fontSize.subsectionHeader);
     doc.setFont(styles.fontFamily, 'bold');
@@ -249,17 +252,14 @@ async function createPersonalCyclePDF(data, clientData, targetYear, customizatio
     
     doc.setFontSize(styles.fontSize.body);
     doc.setFont(styles.bodyFontFamily, 'normal');
-    const alignLines = doc.splitTextToSize(data.cycle_synthesis.alignment_guidance, contentWidth - 10);
     doc.text(alignLines, margin + 5, yPos + 16);
-    yPos += 45;
+    yPos += alignBoxHeight + 8;
     
     // ========== PERSONAL YEAR SECTION ==========
-    addPageFooter();
-    doc.addPage();
-    currentPage++;
-    yPos = margin;
+    addVerticalSpace(15); // Section break
     
-    const personal = data.personal_cycle.detailed_meaning;
+    const personalMeaning = data.personal_cycle.meaning;
+    const personalDetailed = data.personal_cycle.detailed_meaning;
     
     doc.setTextColor(...primaryColor);
     doc.setFontSize(styles.fontSize.sectionHeader);
@@ -268,21 +268,52 @@ async function createPersonalCyclePDF(data, clientData, targetYear, customizatio
     yPos += 10;
     
     doc.setFontSize(styles.fontSize.subsectionHeader);
-    doc.text(personal.title, margin, yPos);
+    doc.text(personalMeaning.title, margin, yPos);
     yPos += 10;
     
     doc.setFontSize(styles.fontSize.body);
     doc.setFont(styles.bodyFontFamily, 'italic');
     doc.setTextColor(...accentColor);
-    const meaningLines = doc.splitTextToSize(data.personal_cycle.meaning, contentWidth);
-    doc.text(meaningLines, margin, yPos);
-    yPos += meaningLines.length * 6 + 15;
+    const themeText = `Theme: ${personalMeaning.theme}`;
+    const themeLines = doc.splitTextToSize(themeText, contentWidth);
+    doc.text(themeLines, margin, yPos);
+    yPos += themeLines.length * 6 + 8;
     
-    // Core Attributes
+    // Detailed Meaning - Allow to flow naturally across pages
     doc.setFont(styles.bodyFontFamily, 'normal');
-        doc.setTextColor(...secondaryColor);
+    doc.setTextColor(...secondaryColor);
     doc.setFontSize(styles.fontSize.subsectionHeader);
     doc.setFont(styles.fontFamily, 'bold');
+    doc.text('Deep Insight', margin, yPos);
+    yPos += 10;
+    
+    doc.setFontSize(styles.fontSize.body);
+    doc.setFont(styles.bodyFontFamily, 'normal');
+    const detailedLines = doc.splitTextToSize(personalDetailed, contentWidth);
+    
+    // Write detailed content with automatic page breaks
+    for (let i = 0; i < detailedLines.length; i++) {
+        // Check if we need a new page before adding this line
+        if (yPos > pageHeight - 30) { // Leave space for footer and some buffer
+            addPageFooter();
+            doc.addPage();
+            currentPage++;
+            yPos = margin;
+            // Reapply formatting after new page
+            doc.setFont(styles.bodyFontFamily, 'normal');
+            doc.setTextColor(...secondaryColor);
+            doc.setFontSize(styles.fontSize.body);
+        }
+        doc.text(detailedLines[i], margin, yPos);
+        yPos += 6; // Line height
+    }
+    addVerticalSpace(8); // Space after detailed insight
+    
+    // Core Attributes
+    addVerticalSpace(10);
+    doc.setFontSize(styles.fontSize.subsectionHeader);
+    doc.setFont(styles.fontFamily, 'bold');
+    doc.setTextColor(...secondaryColor);
     doc.text('Core Attributes', margin, yPos);
     yPos += 10;
     
@@ -290,25 +321,24 @@ async function createPersonalCyclePDF(data, clientData, targetYear, customizatio
     doc.setFont(styles.bodyFontFamily, 'normal');
     
     const attributes = [
-        ['Theme:', personal.theme],
-        ['Energy:', personal.energy],
-        ['Emo Tone:', personal.emotional_tone]
+        ['Energy:', personalMeaning.energy],
+        ['Emotional Tone:', personalMeaning.emotional_tone]
     ];
     
-    attributes.forEach(([label, value]) => {
-        checkNewPage(15);
+    for (const [label, value] of attributes) {
+        ensureSpace(15); // Ensure space for attribute block
         doc.setFont(styles.fontFamily, 'bold');
         doc.text(label, margin, yPos);
         doc.setFont(styles.bodyFontFamily, 'normal');
-        const valueLines = doc.splitTextToSize(value, contentWidth - 30);
-        doc.text(valueLines, margin + 35, yPos);
+        const valueLines = doc.splitTextToSize(value, contentWidth - 40);
+        doc.text(valueLines, margin + 40, yPos);
         yPos += Math.max(valueLines.length * 5, 8);
-    });
+    }
     
-    yPos += 10;
+    addVerticalSpace(6);
     
     // Key Areas of Focus
-    checkNewPage(50);
+    addVerticalSpace(10);
     doc.setFontSize(styles.fontSize.subsectionHeader);
     doc.setFont(styles.fontFamily, 'bold');
     doc.text('Key Areas of Focus', margin, yPos);
@@ -316,16 +346,16 @@ async function createPersonalCyclePDF(data, clientData, targetYear, customizatio
     
     doc.setFontSize(styles.fontSize.body);
     doc.setFont(styles.bodyFontFamily, 'normal');
-    personal.key_areas.forEach(area => {
-        checkNewPage(10);
-        doc.text('- ' + area, margin + 5, yPos);
+    for (const area of personalMeaning.key_areas) {
+        ensureSpace(10); // Ensure space for list item
+        doc.text('• ' + area, margin + 5, yPos);
         yPos += 7;
-    });
+    }
     
-    yPos += 10;
+    addVerticalSpace(6);
     
     // Opportunities & Challenges
-    checkNewPage(40);
+    addVerticalSpace(10);
     doc.setFontSize(styles.fontSize.subsectionHeader);
     doc.setFont(styles.fontFamily, 'bold');
     doc.text('Opportunities & Challenges', margin, yPos);
@@ -335,48 +365,46 @@ async function createPersonalCyclePDF(data, clientData, targetYear, customizatio
     doc.setFont(styles.fontFamily, 'bold');
     doc.text('Opportunities:', margin, yPos);
     doc.setFont(styles.bodyFontFamily, 'normal');
-    const oppLines = doc.splitTextToSize(personal.opportunities, contentWidth - 35);
+    const oppLines = doc.splitTextToSize(personalMeaning.opportunities, contentWidth - 35);
     doc.text(oppLines, margin + 35, yPos);
-    yPos += 8;
+    yPos += oppLines.length * 5 + 8;
     
-    checkNewPage(20);
+    ensureSpace(20); // Ensure space for challenges
     doc.setFont(styles.fontFamily, 'bold');
     doc.text('Challenges:', margin, yPos);
     doc.setFont(styles.bodyFontFamily, 'normal');
-    const chalLines = doc.splitTextToSize(personal.challenges, contentWidth - 35);
+    const chalLines = doc.splitTextToSize(personalMeaning.challenges, contentWidth - 35);
     doc.text(chalLines, margin + 35, yPos);
-    yPos += 8;
+    yPos += chalLines.length * 5 + 10;
     
     // Action Steps with proper padding
-        checkNewPage(65);
-        
-        const actionStepsHeight = 17 + (personal.action_steps.length * 7) + 8;
-        doc.setFillColor(...lightPrimaryColor);
-        doc.setDrawColor(...primaryColor);
-        doc.roundedRect(margin, yPos, contentWidth, actionStepsHeight, 3, 3, 'FD');
-        
-        yPos += 12;
-        doc.setFontSize(styles.fontSize.subsectionHeader);
-        doc.setFont(styles.fontFamily, 'bold');
-        doc.setTextColor(...primaryColor);
-        doc.text('Action Steps for This Year', margin + 5, yPos);
-        yPos += 8;
-        
-        doc.setFontSize(styles.fontSize.body);
-        doc.setFont(styles.bodyFontFamily, 'normal');
-        doc.setTextColor(...secondaryColor);
-        personal.action_steps.forEach(step => {
-            doc.text('- ' + step, margin + 8, yPos);
-            yPos += 7;
-        });
-        
-        yPos += 18;
+    const actionStepsHeight = 20 + (personalMeaning.action_steps.length * 7);
+    ensureSpace(actionStepsHeight + 10); // Ensure space for action steps box
+    addVerticalSpace(8);
+    
+    doc.setFillColor(...lightPrimaryColor);
+    doc.setDrawColor(...primaryColor);
+    doc.roundedRect(margin, yPos, contentWidth, actionStepsHeight, 3, 3, 'FD');
+    
+    yPos += 12;
+    doc.setFontSize(styles.fontSize.subsectionHeader);
+    doc.setFont(styles.fontFamily, 'bold');
+    doc.setTextColor(...primaryColor);
+    doc.text('Action Steps for This Year', margin + 5, yPos);
+    yPos += 8;
+    
+    doc.setFontSize(styles.fontSize.body);
+    doc.setFont(styles.bodyFontFamily, 'normal');
+    doc.setTextColor(...secondaryColor);
+    for (const step of personalMeaning.action_steps) {
+        doc.text('• ' + step, margin + 8, yPos);
+        yPos += 7;
+    }
+    
+    addVerticalSpace(12);
     
     // ========== LIFE AREAS DEEP DIVE ==========
-    addPageFooter();
-    doc.addPage();
-    currentPage++;
-    yPos = margin;
+    addVerticalSpace(15); // Section break
     
     doc.setTextColor(...primaryColor);
     doc.setFontSize(styles.fontSize.sectionHeader);
@@ -385,14 +413,15 @@ async function createPersonalCyclePDF(data, clientData, targetYear, customizatio
     yPos += 15;
     
     const lifeAreas = [
-        ['Career & Money', personal.career_money],
-        ['Relationships', personal.relationships],
-        ['Health & Wellness', personal.health_wellness],
-        ['Spiritual Lesson', personal.spiritual_lesson]
+        ['Career & Money', personalMeaning.career_money],
+        ['Relationships', personalMeaning.relationships],
+        ['Health & Wellness', personalMeaning.health_wellness],
+        ['Spiritual Lesson', personalMeaning.spiritual_lesson]
     ];
     
-    lifeAreas.forEach(([title, content]) => {
-        checkNewPage(40);
+    for (const [title, content] of lifeAreas) {
+        ensureSpace(25); // Ensure minimum space for life area block
+        
         doc.setFont(styles.bodyFontFamily, 'normal');
         doc.setTextColor(...secondaryColor);
         doc.setFontSize(styles.fontSize.subsectionHeader);
@@ -404,16 +433,43 @@ async function createPersonalCyclePDF(data, clientData, targetYear, customizatio
         doc.setFont(styles.bodyFontFamily, 'normal');
         const contentLines = doc.splitTextToSize(content, contentWidth);
         doc.text(contentLines, margin, yPos);
-        yPos += contentLines.length * 5 + 12;
-    });
+        yPos += contentLines.length * 5 + 8;
+    }
     
     // ========== UNIVERSAL YEAR SECTION ==========
-    addPageFooter();
-    doc.addPage();
-    currentPage++;
-    yPos = margin;
+    // Calculate estimated height for the entire Universal Year section
+    const universalMeaning = data.universal_cycle.meaning;
+    const universalDetailed = data.universal_cycle.detailed_meaning;
     
-    const universal = data.universal_cycle.detailed_meaning;
+    const uTitleHeight = 10; // For section header
+    const uSubtitleHeight = 10; // For title
+    const uThemeLines = doc.splitTextToSize(`Theme: ${universalMeaning.theme}`, contentWidth);
+    const uThemeHeight = uThemeLines.length * 6 + 12;
+    const uDetailedLines = doc.splitTextToSize(universalDetailed, contentWidth);
+    const uDetailedHeight = uDetailedLines.length * 6 + 12; // +12 for header
+    const uProfileHeaderHeight = 10; // For "Global Energy Profile"
+    const uProfileAttrsHeight = 30; // Approx for attributes
+    const uFocusHeaderHeight = 10; // For "Global Focus Areas"
+    const uFocusHeight = universalMeaning.global_focus.length * 7 + 10; // +10 for header
+    const uGuidanceHeaderHeight = 10; // For "Universal Guidance"
+    const uOppLines = doc.splitTextToSize(universalMeaning.opportunities, contentWidth - 35);
+    const uChalLines = doc.splitTextToSize(universalMeaning.challenges, contentWidth - 35);
+    const adviceLines = doc.splitTextToSize(universalMeaning.advice, contentWidth - 35);
+    const uGuidanceHeight = (uOppLines.length + uChalLines.length + adviceLines.length) * 5 + 30; // +30 for headers
+    
+    const totalUSectionHeight = uTitleHeight + uSubtitleHeight + uThemeHeight + uDetailedHeight + 
+                               uProfileHeaderHeight + uProfileAttrsHeight + uFocusHeaderHeight + 
+                               uFocusHeight + uGuidanceHeaderHeight + uGuidanceHeight + 30; // +30 for safety margin
+    
+    // If the entire section won't fit comfortably, start it on a new page
+    if (yPos + totalUSectionHeight > pageHeight - 20) {
+        addPageFooter();
+        doc.addPage();
+        currentPage++;
+        yPos = margin;
+    } else {
+        addVerticalSpace(15); // Otherwise, just add standard section break
+    }
     
     doc.setTextColor(...primaryColor);
     doc.setFontSize(styles.fontSize.sectionHeader);
@@ -422,21 +478,52 @@ async function createPersonalCyclePDF(data, clientData, targetYear, customizatio
     yPos += 10;
     
     doc.setFontSize(styles.fontSize.subsectionHeader);
-    doc.text(universal.title, margin, yPos);
+    doc.text(universalMeaning.title, margin, yPos);
     yPos += 10;
     
     doc.setFontSize(styles.fontSize.body);
     doc.setFont(styles.bodyFontFamily, 'italic');
     doc.setTextColor(...accentColor);
-    const uMeaningLines = doc.splitTextToSize(data.universal_cycle.meaning, contentWidth);
-    doc.text(uMeaningLines, margin, yPos);
-    yPos += uMeaningLines.length * 6 + 15;
+    const uThemeText = `Theme: ${universalMeaning.theme}`;
+    const uThemeLines2 = doc.splitTextToSize(uThemeText, contentWidth);
+    doc.text(uThemeLines2, margin, yPos);
+    yPos += uThemeLines2.length * 6 + 12;
     
-    // Global Energy Profile
+    // Detailed Meaning - Allow to flow naturally across pages
     doc.setFont(styles.bodyFontFamily, 'normal');
-        doc.setTextColor(...secondaryColor);
+    doc.setTextColor(...secondaryColor);
     doc.setFontSize(styles.fontSize.subsectionHeader);
     doc.setFont(styles.fontFamily, 'bold');
+    doc.text('Deep Insight', margin, yPos);
+    yPos += 10;
+    
+    doc.setFontSize(styles.fontSize.body);
+    doc.setFont(styles.bodyFontFamily, 'normal');
+    const uDetailedLines2 = doc.splitTextToSize(universalDetailed, contentWidth);
+    
+    // Write detailed content with automatic page breaks
+    for (let i = 0; i < uDetailedLines2.length; i++) {
+        // Check if we need a new page before adding this line
+        if (yPos > pageHeight - 30) { // Leave space for footer and some buffer
+            addPageFooter();
+            doc.addPage();
+            currentPage++;
+            yPos = margin;
+            // Reapply formatting after new page
+            doc.setFont(styles.bodyFontFamily, 'normal');
+            doc.setTextColor(...secondaryColor);
+            doc.setFontSize(styles.fontSize.body);
+        }
+        doc.text(uDetailedLines2[i], margin, yPos);
+        yPos += 6; // Line height
+    }
+    addVerticalSpace(8); // Space after detailed insight
+    
+    // Global Energy Profile
+    addVerticalSpace(10);
+    doc.setFontSize(styles.fontSize.subsectionHeader);
+    doc.setFont(styles.fontFamily, 'bold');
+    doc.setTextColor(...secondaryColor);
     doc.text('Global Energy Profile', margin, yPos);
     yPos += 10;
     
@@ -444,42 +531,74 @@ async function createPersonalCyclePDF(data, clientData, targetYear, customizatio
     doc.setFont(styles.bodyFontFamily, 'normal');
     
     const universalAttrs = [
-        ['Theme:', universal.theme],
-        ['Energy:', universal.energy],
-        ['Collective:', universal.collective_mood]
+        ['Energy:', universalMeaning.energy],
+        ['Collective Mood:', universalMeaning.collective_mood]
     ];
     
-    universalAttrs.forEach(([label, value]) => {
-        checkNewPage(15);
+    for (const [label, value] of universalAttrs) {
+        ensureSpace(15); // Ensure space for attribute block
         doc.setFont(styles.fontFamily, 'bold');
         doc.text(label, margin, yPos);
         doc.setFont(styles.bodyFontFamily, 'normal');
-        const valueLines = doc.splitTextToSize(value, contentWidth - 35);
-        doc.text(valueLines, margin + 35, yPos);
+        const valueLines = doc.splitTextToSize(value, contentWidth - 40);
+        doc.text(valueLines, margin + 40, yPos);
         yPos += Math.max(valueLines.length * 5, 8);
-    });
+    }
     
-    yPos += 10;
+    addVerticalSpace(6);
+    
+    // --- Global Focus Areas: Ensure it starts fresh if needed ---
+    // Calculate height needed for the "Global Focus Areas" header and its content
+    const uFocusHeaderHeightCalc = 10; // Height for the header text
+    const uFocusContentHeight = universalMeaning.global_focus.length * 7; // Approximate height for list items
+    const uFocusTotalHeight = uFocusHeaderHeightCalc + uFocusContentHeight + 10; // +10 for space after
+    
+    // If it won't fit comfortably, start on a new page
+    if (yPos + uFocusTotalHeight > pageHeight - 20) {
+        addPageFooter();
+        doc.addPage();
+        currentPage++;
+        yPos = margin;
+    }
     
     // Global Focus Areas
-    checkNewPage(50);
-    doc.setFontSize(styles.fontSize.subsectionHeader);
+    addVerticalSpace(10);
+    doc.setFontSize(styles.fontSize.subsectionHeader); // Ensure font size is set before header
     doc.setFont(styles.fontFamily, 'bold');
     doc.text('Global Focus Areas', margin, yPos);
     yPos += 10;
     
-    doc.setFontSize(styles.fontSize.body);
+    doc.setFontSize(styles.fontSize.body); // Ensure body font size is set before list items
     doc.setFont(styles.bodyFontFamily, 'normal');
-    universal.global_focus.forEach(item => {
-        checkNewPage(10);
-        doc.text('- ' + item, margin + 5, yPos);
+    for (const item of universalMeaning.global_focus) {
+        // Check for page break before adding the item
+        if (yPos > pageHeight - 30) { // Leave space for footer and some buffer
+            addPageFooter();
+            doc.addPage();
+            currentPage++;
+            yPos = margin;
+            // Reapply consistent formatting after new page
+            doc.setFont(styles.bodyFontFamily, 'normal');
+            doc.setTextColor(...secondaryColor);
+            doc.setFontSize(styles.fontSize.body); // Explicitly set font size again
+            // Reprint header if needed on new page (optional, often not needed for lists continuing)
+            // doc.setFont(styles.fontFamily, 'bold');
+            // doc.setFontSize(styles.fontSize.subsectionHeader);
+            // doc.text('Global Focus Areas', margin, yPos);
+            // yPos += 10;
+            // doc.setFont(styles.bodyFontFamily, 'normal');
+            // doc.setFontSize(styles.fontSize.body); // Reset to normal for list items again after header
+        }
+        
+        ensureSpace(10); // Ensure space for list item
+        doc.text('• ' + item, margin + 5, yPos);
         yPos += 7;
-    });
+    }
     
-    yPos += 10;
-    
+    addVerticalSpace(6); // Space after the list
+
     // Universal Guidance
-    checkNewPage(60);
+    addVerticalSpace(10);
     doc.setFontSize(styles.fontSize.subsectionHeader);
     doc.setFont(styles.fontFamily, 'bold');
     doc.text('Universal Guidance', margin, yPos);
@@ -489,27 +608,41 @@ async function createPersonalCyclePDF(data, clientData, targetYear, customizatio
     doc.setFont(styles.fontFamily, 'bold');
     doc.text('Opportunities:', margin, yPos);
     doc.setFont(styles.bodyFontFamily, 'normal');
-    const uOppLines = doc.splitTextToSize(universal.opportunities, contentWidth - 35);
-    doc.text(uOppLines, margin + 35, yPos);
-    yPos += 8;
+    const uOppLines2 = doc.splitTextToSize(universalMeaning.opportunities, contentWidth - 35);
+    doc.text(uOppLines2, margin + 35, yPos);
+    yPos += uOppLines2.length * 5 + 8;
     
-    checkNewPage(20);
+    ensureSpace(20); // Ensure space for challenges
     doc.setFont(styles.fontFamily, 'bold');
     doc.text('Challenges:', margin, yPos);
     doc.setFont(styles.bodyFontFamily, 'normal');
-    const uChalLines = doc.splitTextToSize(universal.challenges, contentWidth - 35);
-    doc.text(uChalLines, margin + 35, yPos);
-    yPos += 8;
+    const uChalLines2 = doc.splitTextToSize(universalMeaning.challenges, contentWidth - 35);
+    doc.text(uChalLines2, margin + 35, yPos);
+    yPos += uChalLines2.length * 5 + 8;
     
-    checkNewPage(20);
+    ensureSpace(20); // Ensure space for advice
     doc.setFont(styles.fontFamily, 'bold');
     doc.text('Advice:', margin, yPos);
     doc.setFont(styles.bodyFontFamily, 'normal');
-    const adviceLines = doc.splitTextToSize(universal.advice, contentWidth - 35);
-    doc.text(adviceLines, margin + 35, yPos);
-    yPos += 8;
+    const adviceLines2 = doc.splitTextToSize(universalMeaning.advice, contentWidth - 35);
+    doc.text(adviceLines2, margin + 35, yPos);
+    yPos += adviceLines2.length * 5 + 8;
     
-    // ========== FOOTER ==========
+    
+    addVerticalSpace(20);
+    ensureSpace(30); // Ensure space for quote
+    
+    doc.setFont(styles.bodyFontFamily, 'italic');
+    doc.setTextColor(...accentColor);
+    doc.setFontSize(styles.fontSize.body + 1);
+    const wisdomQuote = '"Life unfolds in cycles, not accidents. When you honor the energy of each year and act with awareness, the Universe responds with clarity, momentum, and meaningful growth."';
+    const quoteLines = doc.splitTextToSize(wisdomQuote, contentWidth - 40);
+    doc.text(quoteLines, pageWidth / 2, yPos, { align: 'center', maxWidth: contentWidth - 40 });
+    
+    // Add final footer
+    addPageFooter();
+    
+    // ========== FINAL PAGE FOOTER ==========
     const footerY = pageHeight - 30;
     doc.setFillColor(...lightPrimaryColor);
     doc.rect(0, footerY, pageWidth, 30, 'F');
